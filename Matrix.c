@@ -49,8 +49,9 @@ void MultiplyM(Matrix* A, Matrix* B,char*N);
 //Multiply two matrices, return new matrix C
 Matrix * MultiplyMR(Matrix* A, Matrix* B,char*N);
 //Multiply Row by value
-void MultiplyRowM(Matrix* M,long long int Row, long double Value,char*N);
-
+void MultiplyRowM(Matrix* M,long long int Row, long double Value);
+//Add Row by vakue
+void AddRowM(Matrix* M, long long int Column,long long int Column2, long double Value);
 
 //Create Matrix given double[][] 2d array, obviously return this
 //new matrix
@@ -106,21 +107,26 @@ long long int i = 10000000000000000000000;
 printf("\n LONG DOUBLE:%LG",D);
 printf("\nLONG INT:%lld",i);
 
-Matrix* NewM = ReadFile("M1",'_');
 
-NewM->Name = "HEYA";
+Matrix* M1 = ReadFile("M1",'_');
 
-toString(NewM);
+Matrix* M2 = ReadFile("M2",'_');
 
-SaveMatrix(NewM,"MyM");
+M1->Name = "HEYA";
 
-DeleteMatrixM(NewM);
+M2->Name = "HEYA 22";
+
+toString(M1);
+
+toString(M2);
+
+AddM(M1,M2,1.0,"M1+M2");
 
 
+toString(M1);
 
-
-
-
+DeleteMatrixM(M1);
+DeleteMatrixM(M2);
 
 return 0;
 }
@@ -134,7 +140,8 @@ exit(0);
 
 if(A->Rows!=B->Rows && A->Columns!=B->Columns){
 printf("\n ROWS DON'T MATCH COLUMNS!");
-return;
+exit(-1);
+//return;
 }
 
 long long int i=0;
@@ -180,7 +187,77 @@ C->Name = Name;
 return C;
 }////Inverse of Matrix, Set A to inverse,
 void InverseM(Matrix* A,char*Name){
+if(A==NULL){
+printf("\n NULL MAtrix Given for inverse!");
+exit(-2);
+}
 
+if(A->Rows!=A->Columns){
+printf("\n Matrix Rows must match columns for inverse matrix");
+return;
+}
+
+long long int i=0;
+long long int j=0;
+long long int k=0;
+
+double divisor = 0.0;
+
+Matrix* EMatrix = RREFMR(A,"Echelon Matrix");
+
+for(i=0;i<A->Columns;i+=1){
+for(j=0;j<A->Columns;j+=1){
+if(i==j){
+if(A->Entries[i][j]!=1.0){
+if(divisor!=0.0){
+MultiplyRowM(A,i,1.0/divisor);
+MultiplyRowM(EMatrix,i,1.0/divisor);
+}
+else{
+printf("\n CANNOT REDUCE COLUMN:%lld",i);
+return;
+}
+}
+
+k=0;
+while(k<A->Columns){
+if(k!=j){
+if(A->Entries[j][k]<0||A->Entries[j][k]>0){
+AddRowM(A,i,k,-A->Entries[j][k]);
+AddRowM(EMatrix,i,k,-EMatrix->Entries[j][k]);
+}
+
+}
+if(A->Entries[j][j]!=1.0){
+divisor = A->Entries[j][j];
+if(divisor!=0.0){
+MultiplyRowM(A,j,1.0/divisor);
+MultiplyRowM(EMatrix,j,1.0/divisor);
+}
+else{
+printf("\n CANNOT REDUCE MATRIX");
+return;
+}
+}
+k++;
+}
+
+}
+
+printf("\n Matrix NOW: \n");
+toString(A);
+printf("\n EMatrix NOW: \n");
+toString(EMatrix);
+
+}
+}
+
+
+DeleteMatrixM(A);
+
+A=EMatrix;
+
+//return EMatrix;
 }////Transpose itself matrix
 void TransposeM(Matrix* A,char*Name){
 if(A==NULL){
@@ -272,7 +349,38 @@ return C;
 }////Get RREF for A Matrix
 
 Matrix* RREFMR(Matrix* A,char*Name){
-return NULL;
+if(A==NULL){
+printf("\n Matrix for RREF does not exist");
+exit(-1);
+}
+
+if(A->Rows!=A->Columns){
+printf("Matrix Rows does not match matrix columns for RREF");
+exit(-1);
+}
+
+long double ** Entries = malloc(A->Columns*sizeof(long double*));
+
+long long int i=0;
+long long int j=0;
+
+for(i=0;i<A->Columns;i+=1){
+Entries[i]=malloc(A->Columns*sizeof(long double));
+for(j=0;j<A->Columns;j+=1){
+if(i==j)
+Entries[i][j] = 1.0;
+else
+Entries[i][j] = 0.0;
+}
+}
+
+Matrix * EM = malloc(sizeof(Matrix));
+EM->Name = Name;
+EM->Rows = A->Columns;
+EM->Columns = A->Columns;
+EM->Entries = Entries;
+
+return EM;
 }
 
 ////Multiply two matrices, return nothing, A is new matrix
@@ -364,7 +472,7 @@ C->Columns=B->Columns;
 
 return C;
 }////Multiply Row by value
-void MultiplyRowM(Matrix* M,long long int Row, long double Value,char*Name){
+void MultiplyRowM(Matrix* M,long long int Row, long double Value){
 if(M==NULL){
 printf("\n MuitiplyRowM NULL Matrix");
 exit(0);
@@ -377,8 +485,27 @@ long long int j=0;
 for(j=0;j<M->Columns;j+=1){
 M->Entries[Row][j]*=Value;
 }
-M->Name = "Mult";
+//M->Name = "Mult";
 }
+
+void AddRowM(Matrix*M,long long int Column1,long long int Column2, long double Value){
+if(M==NULL){
+printf("\n Matrix AddRowM NULL");
+exit(-1);
+}
+/*
+if(Row>=M->Rows || Row<0){
+printf("\nInvalid Row MultiplyRowM");
+exit(0);
+}
+*/
+long long int j=0;
+for(j=0;j<M->Rows;j+=1){
+M->Entries[j][Column2]+=Value*M->Entries[j][Column1];
+}
+
+}
+
 ////Create Matrix given double[][] 2d array, obviously return this
 ////new matrix
 Matrix* CreateMR(long double** E,int Rows,int Columns,char*Name){
@@ -432,13 +559,13 @@ long long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
-A->Entries[i][j] = 1/(1+expl(-A->Entries[i][j]);
+A->Entries[i][j] = 1/(1+expl(-A->Entries[i][j]));
 }
 }
 
 }
 
-////Relu
+//Relu
 void ReluM(Matrix* A){
 if(A==NULL){
 printf("\n No Matrix to Relu");
@@ -458,23 +585,108 @@ A->Entries[i][j]=0.0;
 
 }
 
-//SoftMAx
+//SoftMax
 void SoftMaxM(Matrix* A){
+
+if(A==NULL){
+printf("\nNo Matrix to SoftMax\n");
+exit(-1);
+}
+
+long long int i=0;
+
+long long int j=0;
+
+long long int l=0;
+
+long double** ActualM = malloc(A->Rows*sizeof(long double*));
+
+long double sum = 0.0;
+
+for(i =0; i<A->Rows;i+=1){
+ActualM[i] = malloc(A->Columns*sizeof(long double));
+sum = 0.0;
+
+for(l=0;l<A->Columns;l+=1){
+
+for(j=0; j<A->Rows;j+=1){
+sum+=expl(A->Entries[j][l]);
+}
+
+if(sum==0.0){
+sum  =1.0;
+}
+ActualM[i][l] = expl(A->Entries[i][l])/sum;
+
+}
+
+}
+
+DeleteEntries(A->Entries,A->Rows);
+
+A->Entries = ActualM;
 
 }
 
 //Mimic DSigmoid
 void DSigmoidM(Matrix* A){
 
+if(A==NULL){
+printf("\n No Matrix to DSigmoid");
+exit(-1);
+}
+
+long long int i=0;
+long long int j=0;
+
+for(i=0;i<A->Rows;i+=1){
+for(j=0;j<A->Columns;j+=1){
+A->Entries[i][j]*=(1-A->Entries[i][j]);
+}
+}
+
 }
 
 //Mimic DRelu
 void DReluM(Matrix* A){
 
+if(A==NULL){
+printf("\nNo MAtrix to DRelu");
+exit(-1);
 }
 
-//Mimic Deriv
+long long int i=0;
+long long int j=0;
+
+for(i=0;i<A->Rows;i+=1){
+for(j=0;j<A->Columns;j+=1){
+if(A->Entries[i][j]>0){
+A->Entries[i][j]=1.0;
+}
+else{
+A->Entries[i][j]=0.0;
+}
+}
+}
+
+}
+
+//Mimic DSoftMax
 void DSoftMaxM(Matrix*A){
+
+if(A==NULL){
+printf("\n No Matrix to DSoftmax");
+exit(-1);
+}
+
+long long int i=0;
+long long int j=0;
+
+for(i=0;i<A->Rows;i+=1){
+for(j=0;j<A->Columns;j+=1){
+A->Entries[i][j]*=(1-A->Entries[i][j]);
+}
+}
 
 }
 
