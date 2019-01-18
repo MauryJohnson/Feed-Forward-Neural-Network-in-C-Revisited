@@ -122,6 +122,21 @@ toString(M2);
 
 AddM(M1,M2,1.0,"M1+M2");
 
+toString(M1);
+
+MultiplyM(M1,M2,"M1 * M");
+
+toString(M1);
+
+InverseM(M1,"Inverse M1");
+
+toString(M1);
+
+//M1->Entries[0][2] = 5.5555;
+
+TransposeM(M1,"Inverse M1 Transpose");
+
+//M1->Entries[0][2] = 5.55555;
 
 toString(M1);
 
@@ -201,7 +216,7 @@ long long int i=0;
 long long int j=0;
 long long int k=0;
 
-double divisor = 0.0;
+double divisor = 1.0;
 
 Matrix* EMatrix = RREFMR(A,"Echelon Matrix");
 
@@ -209,6 +224,7 @@ for(i=0;i<A->Columns;i+=1){
 for(j=0;j<A->Columns;j+=1){
 if(i==j){
 if(A->Entries[i][j]!=1.0){
+divisor  =A->Entries[i][j];
 if(divisor!=0.0){
 MultiplyRowM(A,i,1.0/divisor);
 MultiplyRowM(EMatrix,i,1.0/divisor);
@@ -252,11 +268,14 @@ toString(EMatrix);
 }
 }
 
+DeleteEntries(A->Entries,A->Rows);
 
-DeleteMatrixM(A);
+A->Entries = EMatrix->Entries;
 
-A=EMatrix;
+free(EMatrix);
+EMatrix=NULL;
 
+A->Name =Name;
 //return EMatrix;
 }////Transpose itself matrix
 void TransposeM(Matrix* A,char*Name){
@@ -268,11 +287,20 @@ exit(0);
 long long int i=0;
 long long int j=0;
 
+long double** TM = malloc(A->Columns*sizeof(long double*));
+while(j<A->Columns){
+TM[j]=malloc(A->Rows*sizeof(long double));
+j+=1;
+}
+
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
-A->Entries[i][j]=A->Entries[j][i];
+TM[j][i]=A->Entries[i][j];
 }
 }
+
+DeleteEntries(A->Entries,A->Rows);
+A->Entries=TM;
 
 A->Name=Name;
 
@@ -420,6 +448,7 @@ Entries[i][j]=sum;
 }
 
 DeleteEntries(A->Entries,A->Rows);
+A->Entries = Entries;
 A->Name=Name;
 A->Columns=B->Columns;
 
