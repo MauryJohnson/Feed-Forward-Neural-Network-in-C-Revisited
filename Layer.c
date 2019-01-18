@@ -27,7 +27,7 @@ struct Layer_* Next;
 struct Layer_* Prev;
 
 }Layer;
-
+/////////////////////////////////////////////////////////////////////////////////////
 //Create New Layer.. IMPORTENT TO KEEP TRACK OF NEXT AND PREV, SET PREV by passing
 //Parameter Layer Prev
 //Set Next by setting next to Result of NewLaye
@@ -41,7 +41,7 @@ void PrintLayers(Layer* L);
 
 //Print A Layer
 void PrintLayer(Layer*L);
-
+/////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv){
 
 

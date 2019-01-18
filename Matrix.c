@@ -34,11 +34,17 @@ Matrix* M;
 
 }MatrixFileStream;
 
+//Matrix FILE Stream structure
+/////////////////////////////////////////////////////////////////////////////////////
 //Close file, not delete matrix
 void CloseMFS(MatrixFileStream* MFS);
 //Open file, return stream obj
 MatrixFileStream* NewMatrixFileStream(char* Name);
+/////////////////////////////////////////////////////////////////////////////////////
 
+
+//Matrix OPERATIONS!!!
+/////////////////////////////////////////////////////////////////////////////////////
 //Add two matrices, return nothing, A is new matrix
 void AddM(Matrix* A, Matrix * B, long double Mult,char*Name);
 //Add two matrices, return new matrix C
@@ -70,7 +76,10 @@ Matrix * MultiplyMR(Matrix* A, Matrix* B,char*N);
 void MultiplyRowM(Matrix* M,long long int Row, long double Value);
 //Add Row by vakue
 void AddRowM(Matrix* M, long long int Column,long long int Column2, long double Value);
+/////////////////////////////////////////////////////////////////////////////////////
 
+//Matrix Data Creation/Deletion
+///////////////////////////////////////////////////////////////////////////////////
 //Create Matrix given double[][] 2d array, obviously return this
 //new matrix
 Matrix* CreateMR(long double** e,int Rows,int Columns,char*N);
@@ -78,8 +87,10 @@ Matrix* CreateMR(long double** e,int Rows,int Columns,char*N);
 void DeleteMatrixM(Matrix * M);
 //Delete all doubles
 void DeleteEntries(long double**E,long long int rows);
+///////////////////////////////////////////////////////////////////////////////////
 
-
+//ACTIVATION FUNCTIONS AND DERIVATIVE OPERATIONS
+/////////////////////////////////////////////////////////////////////////////////////
 //Sigmoid
 void SigmoidM(Matrix* A);
 //Relu
@@ -92,7 +103,7 @@ void DSigmoidM(Matrix* A);
 void DReluM(Matrix* A);
 //Mimic Deriv
 void DSoftMaxM(Matrix*A);
-
+/////////////////////////////////////////////////////////////////////////////////////
 
 //Print out name of matrix followed by all of its entries
 void toString(Matrix* A);
@@ -102,6 +113,8 @@ void toString(Matrix* A);
 
 //FILE* INPUT = NULL;
 
+//FILE MATRIX HANDLING
+//////////////////////////////////////////////////////////////////////////////////
 MatrixFileStream* ReadFile(MatrixFileStream*MFS,char Delimiter);
 
 void SaveMatrix(Matrix* M, char* FileName);
@@ -111,6 +124,7 @@ void WriteFile(FILE* F,Matrix* M);
 long long int GetColumns(FILE* F);
 
 long double* NextDouble(FILE* F,char D);
+//////////////////////////////////////////////////////////////////////////////////
 
 //bool DelimiterNext(FILE* F,char Delim);
 
