@@ -117,6 +117,7 @@ long double* NextDouble(FILE* F,char D);
 /**
  * Matrix testing main
  */
+
 int main(int argc, char** argv){
 //Matrix* M = malloc(sizeof(Matrix));
 printf("\n LONG Double is size of:%lu\nDouble is size of:%lu\nLONG INT SIZE:%lu\nINT SIZE:%lu",sizeof(long double),sizeof(double),sizeof(long long int),sizeof(int));
@@ -318,7 +319,9 @@ EMatrix=NULL;
 
 A->Name =Name;
 //return EMatrix;
-}////Transpose itself matrix
+}
+
+////Transpose itself matrix
 void TransposeM(Matrix* A,char*Name){
 if(A==NULL){
 printf("\n NULL MATRIX TO TRANSPOSE");
@@ -461,8 +464,9 @@ MultiplyM(B,B,"Matrix Powered");
 }
 
 return B;
-}////Inverse of Matrix, Returned
+}
 
+////Inverse of Matrix, Returned
 Matrix * InverseMR(Matrix* B,char*Name){
 
 if(B==NULL){
@@ -531,8 +535,9 @@ EMatrix->Rows=A->Columns;
 EMatrix->Columns=A->Columns;
 
 return EMatrix;
-}////Copy Matrix, ALWAYS RETURNED
+}
 
+////Copy Matrix, ALWAYS RETURNED
 Matrix * CopyMatrixMR(Matrix* A,char*Name){
 if(A==NULL){
 printf("\nNo matrix to copy");
@@ -563,8 +568,9 @@ C->Entries=Entries;
 C->Name=Name;
 
 return C;
-}////Get RREF for A Matrix
+}
 
+////Get RREF for A Matrix
 void RREFM(Matrix*A,char*Name){
 
 if(A==NULL){
@@ -592,7 +598,9 @@ Entries[i][j] = 0.0;
 }
 }
 
+
 DeleteEntries(A->Entries,A->Rows);
+A->Entries = Entries;
 
 }
 
@@ -672,8 +680,9 @@ A->Entries = Entries;
 A->Name=Name;
 A->Columns=B->Columns;
 
-}////Multiply two matrices, return new matrix C
+}
 
+////Multiply two matrices, return new matrix C
 Matrix * MultiplyMR(Matrix* A, Matrix* B,char*Name){
 if(A==NULL||B==NULL){
 printf("\n  NULL Matrix A Columns does not match Matris B Rows");
@@ -736,7 +745,6 @@ long long int j=0;
 for(j=0;j<M->Columns;j+=1){
 M->Entries[Row][j]*=Value;
 }
-//M->Name = "Mult";
 }
 
 void AddRowM(Matrix*M,long long int Column1,long long int Column2, long double Value){
@@ -744,17 +752,14 @@ if(M==NULL){
 printf("\n Matrix AddRowM NULL");
 exit(-1);
 }
-/*
-if(Row>=M->Rows || Row<0){
-printf("\nInvalid Row MultiplyRowM");
-exit(0);
+if(Column1<0 || Column1>=M->Columns || Column2<0||Column2>=M->Columns){
+printf("\n AddRowM Columns invalid");
+exit(-1);
 }
-*/
 long long int j=0;
 for(j=0;j<M->Rows;j+=1){
 M->Entries[j][Column2]+=Value*M->Entries[j][Column1];
 }
-
 }
 
 ////Create Matrix given double[][] 2d array, obviously return this
@@ -956,7 +961,7 @@ long long int j=0;
 	printf("\n");
    }
 
-}//
+}
 
 //Iterate until reach new line, this will be column
 //MUST DEFINE COLUMN AT THE FIRST ROW AT LEAST!!!!!!!!!!
