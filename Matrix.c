@@ -44,6 +44,9 @@ Matrix * InverseMR(Matrix* A,char*N);
 Matrix * CopyMatrixMR(Matrix* A,char*N);
 //Get RREF for A Matrix
 Matrix* RREFMR(Matrix* A,char*N);
+
+void RREFM(Matrix* A, char*N);
+
 //Multiply two matrices, return nothing, A is new matrix
 void MultiplyM(Matrix* A, Matrix* B,char*N);
 //Multiply two matrices, return new matrix C
@@ -128,18 +131,23 @@ MultiplyM(M1,M2,"M1 * M");
 
 toString(M1);
 
-InverseM(M1,"Inverse M1");
+Matrix* INV = InverseMR(M1,"Inverse M1");
+
+toString(INV);
 
 toString(M1);
 
-//M1->Entries[0][2] = 5.5555;
+M1->Entries[0][2] = 5.5555;
 
-TransposeM(M1,"Inverse M1 Transpose");
-
-//M1->Entries[0][2] = 5.55555;
+TransposeM(M1,"M1 Transpose");
 
 toString(M1);
 
+PowerM(M1,2,"Power Matrix");
+
+toString(M1);
+
+DeleteMatrixM(INV);
 DeleteMatrixM(M1);
 DeleteMatrixM(M2);
 
@@ -212,14 +220,14 @@ printf("\n Matrix Rows must match columns for inverse matrix");
 return;
 }
 
+//Matrix* A = CopyMatrixMR(B,"Matrix B Copy");
+
 long long int i=0;
 long long int j=0;
 long long int k=0;
 
 double divisor = 1.0;
-
 Matrix* EMatrix = RREFMR(A,"Echelon Matrix");
-
 for(i=0;i<A->Columns;i+=1){
 for(j=0;j<A->Columns;j+=1){
 if(i==j){
@@ -234,7 +242,6 @@ printf("\n CANNOT REDUCE COLUMN:%lld",i);
 return;
 }
 }
-
 k=0;
 while(k<A->Columns){
 if(k!=j){
@@ -242,7 +249,6 @@ if(A->Entries[j][k]<0||A->Entries[j][k]>0){
 AddRowM(A,i,k,-A->Entries[j][k]);
 AddRowM(EMatrix,i,k,-EMatrix->Entries[j][k]);
 }
-
 }
 if(A->Entries[j][j]!=1.0){
 divisor = A->Entries[j][j];
@@ -257,14 +263,11 @@ return;
 }
 k++;
 }
-
 }
-
 printf("\n Matrix NOW: \n");
 toString(A);
 printf("\n EMatrix NOW: \n");
 toString(EMatrix);
-
 }
 }
 
@@ -334,16 +337,162 @@ return B;
 }
 
 ////Set A to power of itself
-void PowerM(Matrix* A,long long int Power,char*Name){
+void PowerM(Matrix* B,long long int Power,char*Name){
 
+if(B==NULL){
+printf("\n PowerM No Matrix Given");
+exit(-1);
+}
+
+if(B->Columns!=B->Rows){
+printf("\n Matrix Columns != Matrix Rows PowerM");
+exit(-1);
+}
+if(Power==0){
+
+Matrix* RREF = RREFMR(B,"Power 0 Matrix");
+DeleteEntries(B->Entries,B->Rows);
+B->Entries=RREF->Entries;
+free(RREF);
+RREF=NULL;
+
+}
+else if(Power<0){
+
+InverseM(B,"Inverse");
+
+long long int i=0;
+Power=Power*-1;
+
+for(i=0;i<Power;i+=1)
+MultiplyM(B,B,"Inverse Powered");
+
+}
+else{
+
+long long int i=0;
+
+for(i=0; i<Power;i+=1){
+MultiplyM(B,B,"Matrix Powered");
+}
+
+}
 }////Return Power of Matrix A
 
 Matrix* PowerMR(Matrix* A,long long int Power,char*Name){
-return NULL;
+
+if(A==NULL){
+printf("\n PowerMR No Matrix Given");
+exit(-1);
+}
+
+Matrix* B = CopyMatrixMR(A,"PowerMR Copied Matrix");
+
+if(B->Columns!=B->Rows){
+printf("\n Matrix Columns != Matrix Rows PowerM");
+exit(-1);
+}
+if(Power==0){
+
+Matrix* RREF = RREFMR(B,"Power 0 Matrix");
+DeleteEntries(B->Entries,B->Rows);
+B->Entries=RREF->Entries;
+free(RREF);
+RREF=NULL;
+
+}
+else if(Power<0){
+
+InverseM(B,"Inverse");
+
+long long int i=0;
+Power=Power*-1;
+
+for(i=0;i<Power;i+=1)
+MultiplyM(B,B,"Inverse Powered");
+
+}
+else{
+
+long long int i=0;
+
+for(i=0; i<Power;i+=1){
+MultiplyM(B,B,"Matrix Powered");
+}
+
+}
+
+return B;
 }////Inverse of Matrix, Returned
 
-Matrix * InverseMR(Matrix* A,char*Name){
+Matrix * InverseMR(Matrix* B,char*Name){
+
+if(B==NULL){
+printf("\n NULL MAtrix Given for inverse!");
+exit(-2);
+}
+
+if(B->Rows!=B->Columns){
+printf("\n Matrix Rows must match columns for inverse matrix");
 return NULL;
+}
+
+Matrix* A = CopyMatrixMR(B,"Matrix B Copy");
+
+long long int i=0;
+long long int j=0;
+long long int k=0;
+
+double divisor = 1.0;
+Matrix* EMatrix = RREFMR(A,"Echelon Matrix");
+for(i=0;i<A->Columns;i+=1){
+for(j=0;j<A->Columns;j+=1){
+if(i==j){
+if(A->Entries[i][j]!=1.0){
+divisor  =A->Entries[i][j];
+if(divisor!=0.0){
+MultiplyRowM(A,i,1.0/divisor);
+MultiplyRowM(EMatrix,i,1.0/divisor);
+}
+else{
+printf("\n CANNOT REDUCE COLUMN:%lld",i);
+return NULL;
+}
+}
+k=0;
+while(k<A->Columns){
+if(k!=j){
+if(A->Entries[j][k]<0||A->Entries[j][k]>0){
+AddRowM(A,i,k,-A->Entries[j][k]);
+AddRowM(EMatrix,i,k,-EMatrix->Entries[j][k]);
+}
+}
+if(A->Entries[j][j]!=1.0){
+divisor = A->Entries[j][j];
+if(divisor!=0.0){
+MultiplyRowM(A,j,1.0/divisor);
+MultiplyRowM(EMatrix,j,1.0/divisor);
+}
+else{
+printf("\n CANNOT REDUCE MATRIX");
+return NULL;
+}
+}
+k++;
+}
+}
+printf("\n Matrix NOW: \n");
+toString(A);
+printf("\n EMatrix NOW: \n");
+toString(EMatrix);
+}
+}
+
+EMatrix->Name =Name;
+EMatrix->Rows=A->Columns;
+EMatrix->Columns=A->Columns;
+
+return EMatrix;
 }////Copy Matrix, ALWAYS RETURNED
 
 Matrix * CopyMatrixMR(Matrix* A,char*Name){
@@ -369,12 +518,45 @@ for(j=0;j<A->Columns;j+=1){
 Entries[i][j]=A->Entries[i][j];
 }
 }
+
 C->Rows=A->Rows;
 C->Columns=A->Columns;
-C->Entries=A->Entries;
+C->Entries=Entries;
 C->Name=Name;
+
 return C;
 }////Get RREF for A Matrix
+
+void RREFM(Matrix*A,char*Name){
+
+if(A==NULL){
+printf("\n Matrix for RREF does not exist");
+exit(-1);
+}
+
+if(A->Rows!=A->Columns){
+printf("Matrix Rows does not match matrix columns for RREF");
+exit(-1);
+}
+
+long double ** Entries = malloc(A->Columns*sizeof(long double*));
+
+long long int i=0;
+long long int j=0;
+
+for(i=0;i<A->Columns;i+=1){
+Entries[i]=malloc(A->Columns*sizeof(long double));
+for(j=0;j<A->Columns;j+=1){
+if(i==j)
+Entries[i][j] = 1.0;
+else
+Entries[i][j] = 0.0;
+}
+}
+
+DeleteEntries(A->Entries,A->Rows);
+
+}
 
 Matrix* RREFMR(Matrix* A,char*Name){
 if(A==NULL){
