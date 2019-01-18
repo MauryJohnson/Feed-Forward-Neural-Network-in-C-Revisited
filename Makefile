@@ -1,4 +1,4 @@
-Matrix: Matrix.c
-	gcc -g -Wall -lm -ldl Matrix.c -o Matrix
+Layer: Layer.c
+	gcc -g -Wall -lm -ldl Layer.c -o Layer
 clean:
-	rm Matrix
+	rm Layer

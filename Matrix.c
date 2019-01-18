@@ -118,6 +118,7 @@ long double* NextDouble(FILE* F,char D);
  * Matrix testing main
  */
 
+/*
 int main(int argc, char** argv){
 //Matrix* M = malloc(sizeof(Matrix));
 printf("\n LONG Double is size of:%lu\nDouble is size of:%lu\nLONG INT SIZE:%lu\nINT SIZE:%lu",sizeof(long double),sizeof(double),sizeof(long long int),sizeof(int));
@@ -192,6 +193,7 @@ DeleteMatrixM(M2);
 
 return 0;
 }
+*/
 
 //Add two matrices, return nothing, A is new matrix
 void AddM(Matrix* A, Matrix * B, long double Mult,char*Name){
