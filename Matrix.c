@@ -132,7 +132,15 @@ MatrixFileStream* MFS2 = NewMatrixFileStream("M2");//malloc(sizeof(MatrixFileStr
 
 ReadFile(MFS1,'_');
 
+DeleteMatrixM(MFS1->M);
+
 ReadFile(MFS1,'_');
+
+DeleteMatrixM(MFS1->M);
+
+CloseMFS(MFS1);
+
+CloseMFS(MFS2);
 
 return 0;
 
