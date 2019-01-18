@@ -24,6 +24,21 @@ long double ** Entries;
 //
 } Matrix;
 
+typedef struct MFS_{
+//Name of file stream
+char* FileName;
+//To be closed only when reach EOF!!!
+FILE* F;
+//Matrix returned from each parse
+Matrix* M;
+
+}MatrixFileStream;
+
+//Close file, not delete matrix
+void CloseMFS(MatrixFileStream* MFS);
+//Open file, return stream obj
+MatrixFileStream* NewMatrixFileStream(char* Name);
+
 //Add two matrices, return nothing, A is new matrix
 void AddM(Matrix* A, Matrix * B, long double Mult,char*Name);
 //Add two matrices, return new matrix C
@@ -85,7 +100,9 @@ void toString(Matrix* A);
 //DYNAMICALLY OR NORMALLY Reads matrix from file, returns Matrix Created
 //Matrix* ReadMR(char* FileName,char Delimiter);
 
-Matrix* ReadFile(char* FileName,char Delimiter);
+//FILE* INPUT = NULL;
+
+MatrixFileStream* ReadFile(MatrixFileStream*MFS,char Delimiter);
 
 void SaveMatrix(Matrix* M, char* FileName);
 
@@ -110,10 +127,23 @@ long long int i = 10000000000000000000000;
 printf("\n LONG DOUBLE:%LG",D);
 printf("\nLONG INT:%lld",i);
 
+MatrixFileStream* MFS1 = NewMatrixFileStream("M1");//malloc(sizeof(MatrixFileStream));
+MatrixFileStream* MFS2 = NewMatrixFileStream("M2");//malloc(sizeof(MatrixFileStream));
 
-Matrix* M1 = ReadFile("M1",'_');
+ReadFile(MFS1,'_');
 
-Matrix* M2 = ReadFile("M2",'_');
+ReadFile(MFS1,'_');
+
+return 0;
+
+ReadFile(MFS2,'_');
+
+CloseMFS(MFS1);
+CloseMFS(MFS2);
+
+Matrix* M1 = MFS1->M;
+
+Matrix* M2 = MFS2->M;
 
 M1->Name = "HEYA";
 
@@ -682,7 +712,9 @@ C->Rows=A->Rows;
 C->Columns=B->Columns;
 
 return C;
-}////Multiply Row by value
+}
+
+////Multiply Row by value
 void MultiplyRowM(Matrix* M,long long int Row, long double Value){
 if(M==NULL){
 printf("\n MuitiplyRowM NULL Matrix");
@@ -735,6 +767,7 @@ M->Rows=Rows;
 M->Columns=Columns;
 return M;
 }
+
 ////Delete all matrices
 void DeleteMatrixM(Matrix * M){
 if(M==NULL){
@@ -747,6 +780,7 @@ DeleteEntries(M->Entries,M->Rows);
 free(M);
 M=NULL;
 }
+
 ////Delete all doubles
 void DeleteEntries(long double**E,long long int Rows){
 long long int i=0;
@@ -758,6 +792,7 @@ free(E);
 E=NULL;
 }
 //
+
 ////Sigmoid
 void SigmoidM(Matrix* A){
 if(A==NULL){
@@ -921,11 +956,28 @@ long long int GetColumns(FILE* F){
 
 long PrevPosition = ftell(F);
 
+bool NumFound=true;
+
+char c;
+
+while(fscanf(F,"%c",&c)!=EOF){
+if(isdigit(c)){
+//continue;
+//NumFound=true;
+break;
+}
+//PrevPosition=ftell(F);
+}
+//Back to before hit num
+//PrevPosition-=1;
+
+//fseek(F,PrevPosition,SEEK_SET);
+
 long long int C = 0;
 
 bool Dot = false;
 
-char c;
+//char c;
 
 while(fscanf(F,"%c",&c)!=EOF){
 if(!isdigit(c)){
@@ -954,14 +1006,7 @@ break;
 }
 
 }
-/*else{
 
-
-
-
-
-}
-*/
 }
 
 //fsetpos(F,PrevPosition);
@@ -1056,10 +1101,12 @@ return Ret;
 /**
  *Read File, store into matrix
  */
-Matrix* ReadFile(char* FileName,char Delimiter){
-FILE* F = fopen(FileName,"r");
+MatrixFileStream* ReadFile(MatrixFileStream* MFS1,char Delimiter){
+
+FILE* F = MFS1->F;
+
 if(F==NULL){
-printf("\nUnable to open file:%s",FileName);
+printf("\nUnable to open file:%s",MFS1->FileName);
 exit(-4);
 }
 
@@ -1080,6 +1127,7 @@ if(Result[0]==2||Result[0]==1){
 
 
 if(Result[0]==1){
+
 if(Result[1]!=-88888888){
 printf("\n RESULT FINAL:%LG",Result[1]);
 Entries[Rows][Columns]=Result[1];
@@ -1137,9 +1185,10 @@ M->Columns=COLUMNS;
 
 M->Entries = Entries;
 
-fclose(F);
+MFS1->F=F;
+MFS1->M=M;
 
-return M;
+return MFS1;
 }
 //fseek(F,PrevPosition,SEEK_SET);
 //
@@ -1184,3 +1233,27 @@ fprintf(F,"\n");
 }
 
 }
+
+//Close file, not delete matrix
+void CloseMFS(MatrixFileStream* MFS){
+if(MFS!=NULL)
+if(MFS->F!=NULL)
+fclose(MFS->F);
+free(MFS);
+MFS=NULL;
+}
+
+MatrixFileStream* NewMatrixFileStream(char* Name){
+FILE* F = fopen(Name,"r");
+if(F==NULL){
+printf("\n File Cannot open");
+exit(-1);
+}
+
+MatrixFileStream* MFS = malloc(sizeof(MatrixFileStream));
+MFS->FileName=Name;
+MFS->F=F;
+
+return MFS;
+}
+
