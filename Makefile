@@ -1,4 +1,4 @@
-Layer: Layer.c
-	gcc -g -Wall -lm -ldl Layer.c -o Layer
+NN: NeuralNetwork.c
+	gcc -g -Wall -lm -ldl NeuralNetwork.c -o NN
 clean:
-	rm Layer
+	rm NN

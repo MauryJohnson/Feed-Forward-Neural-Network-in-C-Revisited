@@ -1,3 +1,4 @@
+/*
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -7,8 +8,24 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <string.h>
+#include "String.c"
 #include <ctype.h>
 #include <math.h>
+*/
+
+#include "String.c"
+
+/*
+//Points to concatenated String!
+typedef struct String_{
+
+//Length of String
+int Length;
+
+char* Name;
+
+}String;
+*/
 
 typedef struct Matrix__{
 //The name of the matrix, useful
@@ -66,12 +83,19 @@ Matrix * CopyMatrixMR(Matrix* A,char*N);
 //Get RREF for A Matrix
 Matrix* RREFMR(Matrix* A,char*N);
 
+void RandomizeM(Matrix* A);
+
 void RREFM(Matrix* A, char*N);
 
 //Multiply two matrices, return nothing, A is new matrix
 void MultiplyM(Matrix* A, Matrix* B,char*N);
 //Multiply two matrices, return new matrix C
 Matrix * MultiplyMR(Matrix* A, Matrix* B,char*N);
+//Get sum of norm values, return norm matrix, which are all from Matrix A...
+Matrix * NormalizeValuesMR(Matrix*A);
+//Normalize Matrix given its normalize values
+void NormalizeM(Matrix* A, Matrix*Norms,bool Transposed);
+
 //Multiply Row by value
 void MultiplyRowM(Matrix* M,long long int Row, long double Value);
 //Add Row by vakue
@@ -80,6 +104,8 @@ void AddRowM(Matrix* M, long long int Column,long long int Column2, long double 
 
 //Matrix Data Creation/Deletion
 ///////////////////////////////////////////////////////////////////////////////////
+//Create double** entries
+long double** CreateE(/*long double**e,*/int Rows,int Columns);
 //Create Matrix given double[][] 2d array, obviously return this
 //new matrix
 Matrix* CreateMR(long double** e,int Rows,int Columns,char*N);
@@ -747,6 +773,40 @@ C->Columns=B->Columns;
 return C;
 }
 
+//Return norm matrix, which are all from Matrix A...
+//Essentially it's a copyMatrix
+Matrix * NormalizeValuesMR(Matrix*A){
+if(A==NULL){
+printf("\n No Matrix to Normalize values");
+exit(-2);
+}
+return CopyMatrixMR(A,"Normalized");
+}
+
+////Normalize Matrix given its normalize values
+void NormalizeM(Matrix* A, Matrix*Norms,bool Transposed){
+if(A==NULL||Norms==NULL){
+printf("\n Numm matrices for normalizeM");
+exit(-2);
+}
+
+long long int i=0;
+long long int j=0;
+
+for(i=0;i<A->Rows;i+=1){
+for(j=0;j<A->Columns;j+=1){
+
+if(Transposed)
+A->Entries[i][j]/=Norms->Entries[j][i];
+else
+A->Entries[i][j]/=Norms->Entries[i][j];
+
+}
+}
+
+}
+//
+
 ////Multiply Row by value
 void MultiplyRowM(Matrix* M,long long int Row, long double Value){
 if(M==NULL){
@@ -776,6 +836,34 @@ long long int j=0;
 for(j=0;j<M->Rows;j+=1){
 M->Entries[j][Column2]+=Value*M->Entries[j][Column1];
 }
+}
+
+
+long double** CreateE(/*long double**e,*/int Rows,int Columns){
+if(/*e==NULL || */Rows<=0 || Columns<=0){
+printf("\nNo entries");
+exit(-1);
+}
+long double** Entries = malloc(Rows*sizeof(long double*));
+if(Entries==NULL){
+printf("\n Error Creating Entires CreateE");
+exit(-1);
+}
+long long int i=0;
+long long int j=0;
+for(i=0;i<Rows;i+=1){
+Entries[i]=malloc(Columns*sizeof(long double));
+if(Entries[i]==NULL){
+printf("\n Error Creating Entires CreateE");
+exit(-1);
+}
+for(j=0;j<Columns;j+=1){
+Entries[i][j]=0.0;
+}
+}
+
+return Entries;
+
 }
 
 ////Create Matrix given double[][] 2d array, obviously return this
@@ -985,7 +1073,7 @@ long long int GetColumns(FILE* F){
 
 long PrevPosition = ftell(F);
 
-bool NumFound=true;
+//bool NumFound=true;
 
 char c;
 
@@ -1286,3 +1374,33 @@ MFS->F=F;
 return MFS;
 }
 
+
+void RandomizeM(Matrix* A){
+if(A==NULL){
+printf("\n Matrix is NULL RandomizeM");
+exit(-2);
+}
+
+long long int i=0;
+long long int j=0;
+
+for(i=0;i<A->Rows;i+=1){
+for(j=0;j<A->Columns;j+=1){
+srandom(random());
+A->Entries[i][j] = (random()/(RAND_MAX*1.0));
+}
+}
+
+
+}
+/*
+char* Concat(char* s1, char* s2){
+
+char Caty[1+strlen(s1)+strlen(s2)];
+strcat(Caty,s1);
+strcat(Caty,s2);
+Cat = Caty;
+
+return Cat;
+}
+*/

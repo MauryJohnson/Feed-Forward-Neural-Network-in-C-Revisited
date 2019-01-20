@@ -1,5 +1,6 @@
 #include "Matrix.c"
 
+
 typedef struct Layer_{
 
 //Indicate type of layer
@@ -33,6 +34,9 @@ struct Layer_* Prev;
 //Set Next by setting next to Result of NewLaye
 Layer *NewLayer(Layer* Prev,Matrix* M,int Type, int ActivationType);
 
+//Add new layer
+//void AddLayer(Layer*Layers,Layer*NewL);
+
 //Delete all layers of NN;
 void DeleteLayers(Layer* Head);
 
@@ -42,6 +46,7 @@ void PrintLayers(Layer* L);
 //Print A Layer
 void PrintLayer(Layer*L);
 /////////////////////////////////////////////////////////////////////////////////////
+/*
 int main(int argc, char** argv){
 
 
@@ -80,6 +85,7 @@ CloseMFS(MFS2);
 
 return 0;
 }
+*/
 
 //Print One Layer from neural net
 void PrintLayer(Layer* L){
@@ -127,6 +133,25 @@ i+=1;
 }
 
 }
+
+/*
+void AddLayer(Layer*Layers,Layer*NewL){
+if(Layers==NULL){
+Layers = NewL;
+}
+else{
+Layer* L2 = Layers;
+
+while(L2!=NULL){
+Layer* L3=L2->Next;
+L2=L3;
+}
+
+L2=NewL;
+
+}
+}
+*/
 
 //Create a new valid layer for neural net
 Layer *NewLayer(Layer* Prev,Matrix* M,int Type, int ActivationType){
