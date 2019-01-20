@@ -3,7 +3,7 @@
 typedef struct NN{
 
 //Name of Neural Network
-char* Name;
+String* Name;
 
 //Determine what type of error to evaluate
 //0 is difference,1 is cross entropy
@@ -17,7 +17,14 @@ bool Normalized;
 Layer* Layers;
 
 }NeuralNetwork;
+/*
+typedef struct RetCase_{
 
+long double First;
+long double Second;
+
+}Ret;
+*/
 //Append Layer to Neural Network
 void AddLayer(NeuralNetwork* N,Layer*L);
 
@@ -31,7 +38,7 @@ NeuralNetwork* CreateNeuralNetwork(Layer* AllLayers);
 void DeleteNetwork(NeuralNetwork*N);
 
 //Given filename, parse all layers for neural network
-Layer* ParseLayers(char* FileName,char Delim);
+NeuralNetwork* ParseLayers(char* FileName,char Delim);
 
 //Parse integer from user input
 int ParseInt();
@@ -47,13 +54,12 @@ Layer* AL;
 NeuralNetwork*N;
 if(argc>2){
 
-AL=ParseLayers(argv[1],argv[2][0]);
-
-//N=
+N=ParseLayers(argv[1],argv[2][0]);
 
 }
 else{
 N= CreateNeuralNetwork(NULL);
+
 }
 
 PrintNetwork(N);
@@ -75,8 +81,8 @@ exit(-1);
 
 Layer * L = N->Layers;
 if(L==NULL){
-L = NL;
-L->Next=NULL;
+N->Layers = NL;
+N->Layers->Next=NULL;
 return;
 }
 
@@ -237,7 +243,7 @@ if(N==NULL){
 printf("\n Neural Network is NULL");
 exit(-1);
 }
-printf("\n\n Neural Network:%s",N->Name);
+printf("\n\n Neural Network:%s",N->Name!=NULL?N->Name->Name:"NULL");
 printf("\n Error type:%d",N->ErrorType);
 
 PrintLayers(N->Layers);
@@ -246,7 +252,7 @@ PrintLayers(N->Layers);
 
 //Parse all layers from file
 //use MFS, matrix file stream
-Layer* ParseLayers(char*FileName,char Delim){
+NeuralNetwork* ParseLayers(char*FileName,char Delim){
 
 //Read NN file format:
 //Parse Name-DELIM-ErrorType-DELIM-Normalized ->Normalized 1 or 0
@@ -254,7 +260,9 @@ Layer* ParseLayers(char*FileName,char Delim){
 //Hidden layers will have activation WHETHER ACTIVATED OF NOT,
 //Weight next, Error whether there or not, 
 
-Layer* Layers = malloc(sizeof(Layer));
+//Layer* Layers = malloc(sizeof(Layer));
+
+NeuralNetwork* NN = malloc(sizeof(NeuralNetwork));
 
 MatrixFileStream* MFS = NewMatrixFileStream(FileName);
 if(MFS==NULL){
@@ -268,77 +276,151 @@ char* str = NULL;
 
 int i=0;
 
+int p;
+
 do{
 str = NextString(F,Delim);
 //printf("\n Indicator:%s",str);
 if(str!=NULL){
 printf("\n Indicator:%s",str);
+
+if(i==0){
+
+
+NN->Name = Concat(NULL,str);
+}
+else if(i==1){
+p=atoi(str);
+if(p<0||p>1)
+{
+printf("Bad Indicator parsed");
+exit(-2);
+}
+NN->ErrorType=p;
+}
+else if(i==2){
+p=atoi(str);
+if(p<0||p>1)
+{
+printf("Bad Indicator parsed");
+exit(-2);
+}
+NN->Normalized = p==0 ? false:true;
+}
 free(str);
 str=NULL;
 }
 i+=1;
 }while(i<=2);
 
+Layer* Prev = NULL;
+
 i=0;
 
-NextString(F,Delim);
-NextString(F,Delim);
+str = NextString(F,Delim);
+free(str);
+str=NULL;
+str = NextString(F,Delim);
 //Get Activation FOR INPUT Layer
 ReadFile(MFS,Delim);
 
+Matrix* C = MFS->M;
+
+Layer* H2 = NewLayer(NULL,C,0,0);
+
+AddLayer(NN,H2);
+
+Prev=H2;
+
 //Get Activation for HIDDEN Layer n
+if(str!=NULL)
+free(str);
+str=NULL;
 
-//Ns,Ns,R,Ns,R,Ns,R,Ns,R
-//do{
+//Layer* Prev = NULL;
+//Ns,Ns,R,Ns,R,Ns,R,Ns,
+while(i<=2){
 
-while(i<2){
-
-if(NextString(F,Delim)==NULL){
+str=NextString(F,Delim);
+if(str==NULL){
 break;
 }
 printf("\nMade it 1");
-if(NextString(F,Delim)==NULL){
+
+free(str);
+str=NULL;
+str=NextString(F,Delim);
+if(str==NULL){
 break;
 }
 
-printf("\nMade it 2");
+printf("\nMade it 2:%s",str);
 
 ReadFile(MFS,Delim);
 
-if(NextString(F,Delim)==NULL){
+Matrix* B=MFS->M;
+
+Layer* H=NewLayer(Prev,B,1,atoi(str+1));
+//else if(i>0)
+Prev=H;
+AddLayer(NN,H);
+
+//DeleteMatrixM(A);
+free(str);
+str=NULL;
+str=NextString(F,Delim);
+if(str==NULL){
 break;
 }
 
-printf("\nMade it 3");
+printf("\nMade it 3:%s",str);
 
 ReadFile(MFS,Delim);
 
-if(NextString(F,Delim)==NULL){
+Matrix* W=MFS->M;
+SetWeights(H,W);
+
+//DeleteMatrixM(W);
+free(str);
+str=NULL;
+str=NextString(F,Delim);
+if(str==NULL){
 break;
 }
 
-printf("\nMade it 4");
+printf("\nMade it 4:%s",str);
 
 ReadFile(MFS,Delim);
 
-if(NextString(F,Delim)==NULL){
+Matrix*E=MFS->M;
+SetError(H,E);
+
+//DeleteMatrixM(E);
+free(str);
+str=NULL;
+str=NextString(F,Delim);
+if(str==NULL){
 break;
 }
 
-printf("\nMade it 5");
+printf("\nMade it 5:%s",str);
 
 ReadFile(MFS,Delim);
 
+Matrix*GW=MFS->M;
+SetGradientWeights(H,GW);
 
+//DeleteMatrixM(GW);
 i+=1;
-//free(str);
-//str=NULL;
+if(str!=NULL)
+free(str);
+str=NULL;
 }
 //}while(str[0]!='\0');
 
 CloseMFS(MFS);
 
-return NULL;
+return NN;
 }
 
 int ParseInt(){
@@ -405,6 +487,8 @@ exit(-1);
 }
 
 DeleteLayers(N->Layers);
+
+DeleteString(N->Name);
 
 free(N);
 N=NULL;

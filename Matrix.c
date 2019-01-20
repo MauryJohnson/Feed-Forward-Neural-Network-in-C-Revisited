@@ -149,12 +149,24 @@ void WriteFile(FILE* F,Matrix* M);
 
 long long int GetColumns(FILE* F);
 
-long double* NextDouble(FILE* F,char D);
+typedef struct RetCase_{
+
+long double First;
+long double Second;
+
+}Ret;
+
+Ret* NextDouble(FILE* F,char D);
 //////////////////////////////////////////////////////////////////////////////////
+
+//Const
+Ret R[1];
 
 void NextLine(FILE* F);
 
 char* NextString(FILE*F,char D);
+
+//long double* Ret = NULL;
 
 //bool DelimiterNext(FILE* F,char Delim);
 
@@ -1200,15 +1212,16 @@ return app;
 //first is 0 for a num
 //second is 1 for delimiter and a num
 //third is 2 for EOF
-long double* NextDouble(FILE*F,char Delimiter){
+Ret* NextDouble(FILE*F,char Delimiter){
 
 bool Dot = false;
 
 //long double Num = -999999999;
 
-long double* Ret = malloc(2*sizeof(long double));
+//R = malloc(sizeof(Ret));
+//long double Ret[2];
 //long long int Line = 0;
-Ret[1] = -88888888;
+R->Second = -88888888;
 
 int ASize = 1;
 char* app = malloc(ASize*sizeof(char));
@@ -1235,12 +1248,12 @@ else if(c==Delimiter){
 //Delimiter hit, break away return NULL
 //long double D = 0.0;
 
-sscanf(app,"%LG",&Ret[1]);
+sscanf(app,"%LG",&(R->Second));
 
-Ret[0] = 1;
+R->First = 1;
 //Ret[1] = D;
 free(app);
-return Ret;
+return R;
 }
 //else if(c==' '){
 //continue;
@@ -1249,12 +1262,12 @@ else{
 //if not digit, not., not delimiter
 //long double D = 1.0;
 
-sscanf(app,"%LG",&Ret[1]);
+sscanf(app,"%LG",&(R->Second));
 
-Ret[0] = 0;
+R->First = 0;
 //Ret[1]=D;
 free(app);
-return Ret;
+return R;
 }
 }
 else{
@@ -1270,10 +1283,10 @@ app[ASize-2] = c;
 //reached EOF, retu
 //long double* LD = malloc(sizeof(long double));
 
-*Ret = 2;
-*(Ret+1)=-999999999;
+R->First = 2;
+R->Second=-999999999;
 free(app);
-return Ret;
+return R;
 }
 
 /**
@@ -1299,37 +1312,39 @@ Entries[0] = malloc((COLUMNS)*sizeof(long double));
 
 while(true){
 
-long double * Result = NextDouble(F,Delimiter);
+NextDouble(F,Delimiter);
 
-if(Result[0]==2||Result[0]==1){
+if(R->First==2||R->First==1){
 
-if(Result[0]==1){
+if(R->First==1){
 
-if(Result[1]!=-88888888){
-printf("\n RESULT FINAL:%LG",Result[1]);
-Entries[Rows][Columns]=Result[1];
+if(R->Second!=-88888888){
+printf("\n RESULT FINAL:%LG",R->Second);
+Entries[Rows][Columns]=R->Second;
 }
 
 }
 
-if(Result!=NULL)
-free(Result);
-Result=NULL;
+/*
+if(Ret!=NULL)
+free(Ret);
+Ret=NULL;
+*/
 
 printf("\n DONE READING");
 break;
 }
 
-printf("\n CASE: %LG",Result[0]);
+printf("\n CASE: %LG",R->First);
 
-printf("\n ENTRY: %LG [%lld,%lld] CASE:%LG",Result[1],Rows,Columns,Result[0]);
+printf("\n ENTRY: %LG [%lld,%lld] CASE:%LG",R->Second,Rows,Columns,R->First);
 
-if(Result[1]!=-88888888){
+if(R->Second!=-88888888){
 //Columns+=1;
 if(Columns>=COLUMNS){
+//printf("\nSET COLYMNS TO 0\n");
 Columns=0;
 Rows+=1;
-
 }
 //
 if(Rows>=Size){
@@ -1337,14 +1352,26 @@ Size+=1;
 Entries[Rows] = malloc((COLUMNS)*sizeof(long double));
 }
 //
-Entries[Rows][Columns] = Result[1];
+Entries[Rows][Columns] = R->Second;
 //
 Columns+=1;
 }
+/*
 free(Result);
 Result=NULL;
-}
+*/
+//if(R!=NULL){
+//free(R);
+//R=NULL;
+//}
 
+}
+/*
+if(R!=NULL){
+free(R);
+R=NULL;
+}
+*/
 //Num Rows and Columns to store all values
 //
 printf("\n ROWS:%lld COLUMNS:%lld\n",++Rows,COLUMNS);

@@ -288,6 +288,17 @@ L=NULL;
 
 }
 
+void SetGradientWeights(Layer* L, Matrix*GW){
+if(L==NULL){
+printf("Layer is NULL! FAILURE TO SET");
+exit(-4);
+}
+if(L->GradientWeights!=NULL){
+DeleteMatrixM(L->GradientWeights);
+}
+L->GradientWeights=GW;
+}
+
 void SetWeights(Layer* L,Matrix* W){
 if(L==NULL){
 printf("Layer is NULL! FAILURE TO SET");
