@@ -39,13 +39,18 @@ int ParseInt();
 //Parse double from user input
 long double ParseDouble();
 
+
+//ARGV[1] CAN BE ARGUMENT FOR FILE
+//ARGV[2] CAN BE ARGUMENT FOR DELIMITER
 int main(int argc, char**argv){
-//printf("Enter Num:");
-//ParseInt();
-//ParseDouble();
+Layer* AL;
+if(argc>2){
 
+AL=ParseLayers(argv[1],argv[2][0]);
 
-Layer* AL = ParseLayers("Network1",'_');
+}
+else{
+AL = ParseLayers("Network1",'_');
 
 /*
 NeuralNetwork* N = CreateNeuralNetwork(AL);
@@ -54,7 +59,7 @@ PrintNetwork(N);
 
 DeleteNetwork(N);
 */
-
+}
 return 0;
 }
 
