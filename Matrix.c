@@ -152,6 +152,8 @@ long long int GetColumns(FILE* F);
 long double* NextDouble(FILE* F,char D);
 //////////////////////////////////////////////////////////////////////////////////
 
+void NextLine(FILE* F);
+
 char* NextString(FILE*F,char D);
 
 //bool DelimiterNext(FILE* F,char Delim);
@@ -1096,6 +1098,8 @@ long long int C = 0;
 
 bool Dot = false;
 
+bool Spaces = false;
+
 //char c;
 
 while(fscanf(F,"%c",&c)!=EOF){
@@ -1114,16 +1118,25 @@ Dot=true;
 else{
 Dot=false;
 
-if(c==' ')
+if(c==' '){
+if(!Spaces)
 C+=1;
+Spaces=true;
+}
 
 if(c=='\n'){
 printf("\n Made it to final column:%lld\n",C);
+if(Spaces){
+C-=1;
+}
 break;
 }
 
 }
 
+}
+else{
+Spaces=false;
 }
 
 }
@@ -1431,6 +1444,16 @@ A->Entries[i][j] = (random()/(RAND_MAX*1.0));
 
 
 }
+
+void NextLine(FILE* F){
+char c;
+while(fscanf(F,"%c",&c)!=EOF){
+if(c=='\n'){
+return;
+}
+}
+}
+
 /*
 char* Concat(char* s1, char* s2){
 

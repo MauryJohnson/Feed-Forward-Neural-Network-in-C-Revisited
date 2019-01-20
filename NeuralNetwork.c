@@ -44,22 +44,21 @@ long double ParseDouble();
 //ARGV[2] CAN BE ARGUMENT FOR DELIMITER
 int main(int argc, char**argv){
 Layer* AL;
+NeuralNetwork*N;
 if(argc>2){
 
 AL=ParseLayers(argv[1],argv[2][0]);
 
+//N=
+
 }
 else{
-AL = ParseLayers("Network1",'_');
-
-/*
-NeuralNetwork* N = CreateNeuralNetwork(AL);
+N= CreateNeuralNetwork(NULL);
+}
 
 PrintNetwork(N);
-
 DeleteNetwork(N);
-*/
-}
+
 return 0;
 }
 
@@ -255,6 +254,8 @@ Layer* ParseLayers(char*FileName,char Delim){
 //Hidden layers will have activation WHETHER ACTIVATED OF NOT,
 //Weight next, Error whether there or not, 
 
+Layer* Layers = malloc(sizeof(Layer));
+
 MatrixFileStream* MFS = NewMatrixFileStream(FileName);
 if(MFS==NULL){
 printf("\nNo File Stream Available");
@@ -264,6 +265,8 @@ exit(-1);
 FILE* F = MFS->F;
 
 char* str;
+
+int i=0;
 
 do{
 str=NextString(F,Delim);
@@ -277,7 +280,15 @@ printf("\n Indicator:%s",str);
 free(str);
 str=NULL;
 }
-}while(1);
+i+=1;
+}while(i<=2);
+
+NextString(F,Delim);
+NextLine(F);
+NextLine(F);
+//Get Activation Layer
+ReadFile(MFS,Delim);
+
 
 CloseMFS(MFS);
 
