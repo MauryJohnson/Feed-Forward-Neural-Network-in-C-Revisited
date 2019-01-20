@@ -1,0 +1,18 @@
+MyNeuralNetwork_
+0_ //ErrType?
+1_ //Normalized?
+I_ //Input Layer
+1.23 //Activation
+2.34_
+H_ //Hidden Layer
+3.45 //Activation
+4.56
+_
+1.23 4.56 //Weights
+7.89 10.1112
+_
+1.23 //ERROR
+4.56
+_
+0 //GRADIENT WEIGHTS
+0

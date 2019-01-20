@@ -6,6 +6,7 @@ typedef struct NN{
 char* Name;
 
 //Determine what type of error to evaluate
+//0 is difference,1 is cross entropy
 int ErrorType;
 
 //Indicate if error is normalized
@@ -24,7 +25,10 @@ void AddLayer(NeuralNetwork* N,Layer*L);
 void PrintNetwork(NeuralNetwork*N);
 
 //Create Neural Network, given a network from past or not
-void CreateNeuralNetwork(Layer* AllLayers);
+NeuralNetwork* CreateNeuralNetwork(Layer* AllLayers);
+
+//Delete NN
+void DeleteNetwork(NeuralNetwork*N);
 
 //Given filename, parse all layers for neural network
 Layer* ParseLayers(char* FileName);
@@ -39,8 +43,10 @@ int main(int argc, char**argv){
 //printf("Enter Num:");
 //ParseInt();
 //ParseDouble();
-CreateNeuralNetwork(NULL);
 
+NeuralNetwork* N = CreateNeuralNetwork(NULL);
+
+PrintNetwork(N);
 
 
 return 0;
@@ -48,27 +54,33 @@ return 0;
 
 //Assume that new layer is already set
 void AddLayer(NeuralNetwork*N,Layer*NL){
+if(N==NULL){
+printf("\n Neural Network is NULL");
+exit(-1);
+}
 if(NL==NULL){
 printf("\n New Layer is null");
 exit(-1);
 }
 
 Layer * L = N->Layers;
-Layer* P = NULL;
-
-while(L!=NULL){
-Layer* L2=L->Next;
-L=L2;
-P=L->Prev;
-}
-
+if(L==NULL){
 L = NL;
 L->Next=NULL;
-L->Prev=P;
+return;
+}
+
+while(L->Next!=NULL){
+Layer* L2=L->Next;
+L=L2;
+}
+
+L->Next=NL;
+L->Next->Next=NULL;
 
 }
 
-void CreateNeuralNetwork(Layer* AL){
+NeuralNetwork* CreateNeuralNetwork(Layer* AL){
 int Layers = -1;
 int LayerSize=-1;
 int Rows=-1;
@@ -91,7 +103,16 @@ printf("\n Impossible Layer Size");
 exit(-1);
 }
 
-N=malloc(sizeof(NeuralNetwork));
+printf("\nEnter Error Type 0 for difference 1 for cross entropy");
+int Err = ParseInt();
+if(Err<0||Err>1){
+printf("\n Invalid Error type input");
+exit(-1);
+}
+
+//N=malloc(sizeof(NeuralNetwork));
+
+N->ErrorType=Err;
 
 printf("\n Normalized? Enter >0 Yes <=0 No:");
 
@@ -109,9 +130,13 @@ exit(-1);
 Matrix* IN = CreateMR(
 CreateE(LayerSize,1),LayerSize,1,"Input");
 
-AddLayer(N,NewLayer(NULL,IN,0,0));
+Layer* IL = NewLayer(NULL,IN,0,0);
+
+N->Layers=IL;
 
 Prev=N->Layers;
+
+//PrintLayers(N->Layers);
 
 }
 else if(i>0){
@@ -127,8 +152,10 @@ printf("\n Invalid Layer Size");
 exit(-1);
 }
 
-printf("\nEnter Activation Function type");
+printf("\nEnter Activation Function type:");
+
 Activation = ParseInt();
+
 if(Activation<0||Activation>3){
 printf("\n Invalid Activation Function");
 exit(-1);
@@ -137,7 +164,13 @@ exit(-1);
 Rows=LayerSize;
 Columns=(i==1? Prev->Activation->Rows:Prev->Weights->Rows);
 
-char* num = malloc(ceil(log10(i*1.0)+6)*sizeof(char));
+int numsize = ceil(log10(i*1.0));
+int size = i==1?(numsize+8):(numsize+7);
+
+printf("\n SIZE:%d",size);
+
+/*
+char* num = malloc(size*sizeof(char));
 
 num[0]='W';
 num[1]='e';
@@ -145,18 +178,26 @@ num[2]='i';
 num[3]='g';
 num[4]='h';
 num[5]='t';
+if(numsize==0){
+num[6]=1;
+numsize=1;
+}
+num[size-1]='\0';
 
-sprintf(num,"%lld",i);
+snprintf(num+6,numsize,"%lld",i);
 
 printf("\n%s",num);
+*/
 
-Matrix* Weights = CreateMR(CreateE(Rows,Columns+1),Rows,Columns+1,num);
+Matrix* Weights = CreateMR(CreateE(Rows,Columns+1),Rows,Columns+1,"");
 
 RandomizeM(Weights);
 
 Layer* H = NewLayer(Prev,Weights,1,Activation);
 
 AddLayer(N,H);
+
+//PrintLayer(H);
 
 Prev=H;
 
@@ -167,9 +208,18 @@ Prev=H;
 }
 
 else{
+//Iterate all layers parsed from file and just store them into new NN
+Layer* L = AL;
 
+while(L!=NULL){
+AddLayer(N,L);
+Layer*L2=L->Next;
+L=L2;
+}
 
+}
 
+return N;
 }
 
 void PrintNetwork(NeuralNetwork*N){
@@ -177,14 +227,25 @@ if(N==NULL){
 printf("\n Neural Network is NULL");
 exit(-1);
 }
-printf("\n Neural Network:%s",N->Name);
+printf("\n\n Neural Network:%s",N->Name);
 printf("\n Error type:%d",N->ErrorType);
 
 PrintLayers(N->Layers);
 
 }
 
+//Parse all layers from file
+//use MFS, matrix file stream
 Layer* ParseLayers(char*FileName){
+
+//Read NN file format:
+//Parse Name-DELIM-ErrorType-DELIM-Normalized ->Normalized 1 or 0
+//IN layer will only have Activation WHETHER ACTIVATED OR NOT
+//Hidden layers will have activation WHETHER ACTIVATED OF NOT,
+//Weight next, Error whether there or not, 
+
+MatrixFileStream MFS = NewMatrixFileStream("NN");
+
 
 
 return NULL;
@@ -197,18 +258,23 @@ char buf[4096];
 
 int n;
 
+//scanf(" %d",&n);
+
+
 do {
      if (!fgets(buf, sizeof buf, stdin))
         break;
-
      // remove \n
-     buf[strlen(buf) - 1] = 0;
+   buf[strlen(buf) - 1] = 0;
      //
    n = strtol(buf, &end, 10);
-   
+  
+   if(n<0){
+	printf("\n Error strtol");
+	exit(-1);
+   }  
+ 
 } while (end != buf + strlen(buf));
-
-sprintf(end,"%d",n);
 
 printf("\n%d Entered",n);
 
@@ -240,4 +306,16 @@ printf("\n%LG Entered",n);
 
 return n;
 
+}
+
+void DeleteNetwork(NeuralNetwork*N){
+if(N==NULL){
+printf("\n Delete Network NULL network");
+exit(-1);
+}
+
+DeleteLayers(N->Layers);
+
+free(N);
+N=NULL;
 }

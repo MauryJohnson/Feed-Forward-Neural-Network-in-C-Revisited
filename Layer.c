@@ -123,6 +123,10 @@ Layer* P2 = P->Prev;
 P=P2;
 }
 }
+else{
+P=L;
+}
+
 long long int i=0;
 while(P!=NULL){
 printf("\nPrint Layer:%lld",i);
@@ -156,6 +160,10 @@ L2=NewL;
 //Create a new valid layer for neural net
 Layer *NewLayer(Layer* Prev,Matrix* M,int Type, int ActivationType){
 Layer* L =malloc(sizeof(Layer));
+if(M==NULL){
+printf("\n FAILURE GETTING MATRIX");
+exit(-3);
+}
 if(L==NULL){
 printf("\n FAILURE Error creating new layer!");
 exit(-4);
