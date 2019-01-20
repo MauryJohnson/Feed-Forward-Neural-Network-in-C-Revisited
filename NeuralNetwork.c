@@ -31,7 +31,7 @@ NeuralNetwork* CreateNeuralNetwork(Layer* AllLayers);
 void DeleteNetwork(NeuralNetwork*N);
 
 //Given filename, parse all layers for neural network
-Layer* ParseLayers(char* FileName);
+Layer* ParseLayers(char* FileName,char Delim);
 
 //Parse integer from user input
 int ParseInt();
@@ -44,10 +44,16 @@ int main(int argc, char**argv){
 //ParseInt();
 //ParseDouble();
 
-NeuralNetwork* N = CreateNeuralNetwork(NULL);
+
+Layer* AL = ParseLayers("Network1",'_');
+
+/*
+NeuralNetwork* N = CreateNeuralNetwork(AL);
 
 PrintNetwork(N);
 
+DeleteNetwork(N);
+*/
 
 return 0;
 }
@@ -236,7 +242,7 @@ PrintLayers(N->Layers);
 
 //Parse all layers from file
 //use MFS, matrix file stream
-Layer* ParseLayers(char*FileName){
+Layer* ParseLayers(char*FileName,char Delim){
 
 //Read NN file format:
 //Parse Name-DELIM-ErrorType-DELIM-Normalized ->Normalized 1 or 0
@@ -244,9 +250,31 @@ Layer* ParseLayers(char*FileName){
 //Hidden layers will have activation WHETHER ACTIVATED OF NOT,
 //Weight next, Error whether there or not, 
 
-MatrixFileStream MFS = NewMatrixFileStream("NN");
+MatrixFileStream* MFS = NewMatrixFileStream(FileName);
+if(MFS==NULL){
+printf("\nNo File Stream Available");
+exit(-1);
+}
 
+FILE* F = MFS->F;
 
+char* str;
+
+do{
+str=NextString(F,Delim);
+if(str[0]=='\0'){
+break;
+free(str);
+str=NULL;
+}
+else{
+printf("\n Indicator:%s",str);
+free(str);
+str=NULL;
+}
+}while(1);
+
+CloseMFS(MFS);
 
 return NULL;
 }

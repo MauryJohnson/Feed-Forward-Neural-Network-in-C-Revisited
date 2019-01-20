@@ -8,11 +8,18 @@ H_ //Hidden Layer
 3.45 //Activation
 4.56
 _
+W_
 1.23 4.56 //Weights
 7.89 10.1112
 _
+E_
 1.23 //ERROR
 4.56
 _
+GW_
 0 //GRADIENT WEIGHTS
 0
+_
+O_
+1
+1

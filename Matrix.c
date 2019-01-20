@@ -152,6 +152,8 @@ long long int GetColumns(FILE* F);
 long double* NextDouble(FILE* F,char D);
 //////////////////////////////////////////////////////////////////////////////////
 
+char* NextString(FILE*F,char D);
+
 //bool DelimiterNext(FILE* F,char Delim);
 
 /**
@@ -1130,6 +1132,42 @@ break;
 fseek(F,PrevPosition,SEEK_SET);
 
 return C;
+
+}
+
+//Always return string
+// when hit delimiter, return
+char* NextString(FILE*F,char D){
+
+char* app = malloc(sizeof(char));
+app[0]='\0';
+//app[1]='\0';
+int pos = 0;
+
+char c;
+
+do{
+
+if(fscanf(F,"%c",&c)==EOF){
+break;
+}
+
+if(c==D){
+break;
+}
+
+app[pos]=c;
+pos+=1;
+app=realloc(app,(pos+1)*sizeof(char));
+app[pos]='\0';
+if(app==NULL){
+printf("\n Error Getting Next String");
+exit(-2);
+}
+
+}while(c!=D);
+
+return app;
 
 }
 
