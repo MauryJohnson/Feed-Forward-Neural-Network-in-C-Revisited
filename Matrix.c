@@ -1081,10 +1081,15 @@ long PrevPosition = ftell(F);
 
 char c;
 
+long long int C=0;
+
+bool Spaces = false;
+
 while(fscanf(F,"%c",&c)!=EOF){
 if(isdigit(c)){
 //continue;
 //NumFound=true;
+C=1;
 break;
 }
 //PrevPosition=ftell(F);
@@ -1094,11 +1099,11 @@ break;
 
 //fseek(F,PrevPosition,SEEK_SET);
 
-long long int C = 0;
+//long long int C = 0;
 
 bool Dot = false;
 
-bool Spaces = false;
+//bool Spaces = true;
 
 //char c;
 
@@ -1119,16 +1124,11 @@ else{
 Dot=false;
 
 if(c==' '){
-if(!Spaces)
-C+=1;
 Spaces=true;
 }
 
 if(c=='\n'){
 printf("\n Made it to final column:%lld\n",C);
-if(Spaces){
-C-=1;
-}
 break;
 }
 
@@ -1136,6 +1136,8 @@ break;
 
 }
 else{
+if(Spaces)
+C+=1;
 Spaces=false;
 }
 
@@ -1151,13 +1153,17 @@ return C;
 //Always return string
 // when hit delimiter, return
 char* NextString(FILE*F,char D){
+if(F==NULL){
+return NULL;
+}
 
 char* app = malloc(sizeof(char));
 app[0]='\0';
+
 //app[1]='\0';
 int pos = 0;
 
-char c;
+char c=' ';
 
 do{
 
@@ -1168,7 +1174,6 @@ break;
 if(c==D){
 break;
 }
-
 app[pos]=c;
 pos+=1;
 app=realloc(app,(pos+1)*sizeof(char));
@@ -1177,8 +1182,13 @@ if(app==NULL){
 printf("\n Error Getting Next String");
 exit(-2);
 }
-
 }while(c!=D);
+
+
+if(strlen(app)==0){
+free(app);
+app=NULL;
+}
 
 return app;
 
@@ -1278,7 +1288,7 @@ printf("\nUnable to open file:%s",MFS1->FileName);
 exit(-4);
 }
 
-long long int COLUMNS = GetColumns(F)+1;
+long long int COLUMNS = GetColumns(F);
 
 long long int Columns = 0;
 long long int Rows = 0;
@@ -1293,15 +1303,16 @@ long double * Result = NextDouble(F,Delimiter);
 
 if(Result[0]==2||Result[0]==1){
 
-
 if(Result[0]==1){
 
 if(Result[1]!=-88888888){
 printf("\n RESULT FINAL:%LG",Result[1]);
 Entries[Rows][Columns]=Result[1];
 }
+
 }
 
+if(Result!=NULL)
 free(Result);
 Result=NULL;
 

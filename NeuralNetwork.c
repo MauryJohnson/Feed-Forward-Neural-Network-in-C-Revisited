@@ -264,18 +264,14 @@ exit(-1);
 
 FILE* F = MFS->F;
 
-char* str;
+char* str = NULL;
 
 int i=0;
 
 do{
-str=NextString(F,Delim);
-if(str[0]=='\0'){
-break;
-free(str);
-str=NULL;
-}
-else{
+str = NextString(F,Delim);
+//printf("\n Indicator:%s",str);
+if(str!=NULL){
 printf("\n Indicator:%s",str);
 free(str);
 str=NULL;
@@ -283,12 +279,62 @@ str=NULL;
 i+=1;
 }while(i<=2);
 
+i=0;
+
 NextString(F,Delim);
-NextLine(F);
-NextLine(F);
-//Get Activation Layer
+NextString(F,Delim);
+//Get Activation FOR INPUT Layer
 ReadFile(MFS,Delim);
 
+//Get Activation for HIDDEN Layer n
+
+//Ns,Ns,R,Ns,R,Ns,R,Ns,R
+//do{
+
+while(i<2){
+
+if(NextString(F,Delim)==NULL){
+break;
+}
+printf("\nMade it 1");
+if(NextString(F,Delim)==NULL){
+break;
+}
+
+printf("\nMade it 2");
+
+ReadFile(MFS,Delim);
+
+if(NextString(F,Delim)==NULL){
+break;
+}
+
+printf("\nMade it 3");
+
+ReadFile(MFS,Delim);
+
+if(NextString(F,Delim)==NULL){
+break;
+}
+
+printf("\nMade it 4");
+
+ReadFile(MFS,Delim);
+
+if(NextString(F,Delim)==NULL){
+break;
+}
+
+printf("\nMade it 5");
+
+ReadFile(MFS,Delim);
+
+
+i+=1;
+//free(str);
+//str=NULL;
+}
+//}while(str[0]!='\0');
 
 CloseMFS(MFS);
 
