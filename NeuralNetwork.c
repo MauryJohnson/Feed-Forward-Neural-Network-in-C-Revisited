@@ -32,10 +32,13 @@ void AddLayer(NeuralNetwork** N,Layer**L);
 void PrintNetwork(NeuralNetwork*N);
 
 //Create Neural Network, given a network from past or not
-NeuralNetwork* CreateNeuralNetwork(Layer* AllLayers);
+NeuralNetwork** CreateNeuralNetwork(Layer* AllLayers);
 
 //Delete NN
 void DeleteNetwork(NeuralNetwork**N);
+
+//Save NN
+void SaveNetwork(NeuralNetwork**N,char Delim);
 
 //Given filename, parse all layers for neural network
 NeuralNetwork** ParseLayers(char* FileName,char Delim);
@@ -66,13 +69,25 @@ N = (ParseLayers(argv[1],argv[2][0]));
 //DeleteNetwork(N);
 }
 else{
-//N= CreateNeuralNetwork(NULL);
-
+N= CreateNeuralNetwork(NULL);
 }
 //free(N->Name);
 //DeleteString(N->Name);
 //free(N);
 
+
+SaveNetwork(N,'_');
+/*
+
+
+
+
+
+
+
+
+
+*/
 PrintNetwork(*N);
 DeleteNetwork(N);
 //
@@ -113,7 +128,7 @@ L=L2;
 //(*NL)->Prev = L;
 }
 
-NeuralNetwork* CreateNeuralNetwork(Layer* AL){
+NeuralNetwork** CreateNeuralNetwork(Layer* AL){
 int Layers = -1;
 int LayerSize=-1;
 int Rows=-1;
@@ -124,7 +139,9 @@ int Activation=-1;
 unsigned long int i=0;
 unsigned long int j=0;
 
-NeuralNetwork* N = malloc(sizeof(NeuralNetwork));
+NeuralNetwork** N = malloc(sizeof(NeuralNetwork*));
+
+*N=malloc(sizeof(NeuralNetwork));
 
 Layer** Prev;
 
@@ -145,11 +162,11 @@ exit(-1);
 
 //N=malloc(sizeof(NeuralNetwork));
 
-N->ErrorType=Err;
+(*N)->ErrorType=Err;
 
 printf("\n Normalized? Enter >0 Yes <=0 No:");
 
-N->Normalized = ParseInt()>0;
+(*N)->Normalized = ParseInt()>0;
 
 for(i=0;i<Layers;i+=1){
 if(i==0){
@@ -165,9 +182,9 @@ CreateE(LayerSize,1),LayerSize,1,"Input");
 
 Layer** IL = NewLayer(NULL,IN,0,0);
 
-N->Layers=IL;
+(*N)->Layers=IL;
 
-Prev=(N->Layers);
+Prev=((*N)->Layers);
 
 //PrintLayers(N->Layers);
 
@@ -229,7 +246,7 @@ RandomizeM(Weights);
 Layer** H = NewLayer(Prev,Weights,1,Activation);
 //Layer**H=&H2;
 
-AddLayer(&N,H);
+AddLayer(N,H);
 
 //PrintLayer(H);
 
@@ -246,7 +263,7 @@ else{
 Layer* L2 = AL;
 Layer**L=&L2;
 while(L!=NULL){
-AddLayer(&N,L);
+AddLayer(N,L);
 
 Layer**L2=((*L)->Next);
 
@@ -386,13 +403,15 @@ Matrix* B=MFS->M;
 
 L = NewLayer(Prev,B,1,atoi(str+1));
 
+SetActivation(L,B);
+
 free(str);
 str=NULL;
 str=NextString(F,Delim);
 if(str==NULL){
-DeleteLayers(L);
-free(L);
-L=NULL;
+//DeleteLayers(L);
+//free(L);
+//L=NULL;
 break;
 }
 
@@ -407,9 +426,9 @@ free(str);
 str=NULL;
 str=NextString(F,Delim);
 if(str==NULL){
-DeleteLayers(L);
-free(L);
-L=NULL;
+//DeleteLayers(L);
+//free(L);
+//L=NULL;
 break;
 }
 
@@ -424,9 +443,9 @@ free(str);
 str=NULL;
 str=NextString(F,Delim);
 if(str==NULL){
-DeleteLayers(L);
-free(L);
-L=NULL;
+//DeleteLayers(L);
+//free(L);
+//L=NULL;
 break;
 }
 
@@ -508,6 +527,259 @@ scanf("%Lf",&n);
 printf("\n%Lf Entered",n);
 
 return n;
+
+}
+
+
+void SaveNetwork(NeuralNetwork**N,char Delim){
+if(N==NULL){
+printf("\n No NN to Save");
+return;
+}
+bool Quit = false;
+bool Write = false;
+long long int i=0;
+size_t intSize = 0;
+char* Model = NULL;
+bool Neg;
+do{
+Write=false;
+Neg=false;
+printf("\n Enter Model#:");
+i=ParseInt();
+
+printf("\n i:%lld",i);
+
+if(i<=0){
+Neg=true;
+i*=-1;
+}
+
+intSize = (size_t)ceil(log10((i)));
+printf("\n Intside:%zu",intSize);
+
+if(Neg || i<=10)
+intSize+=1;
+if(i==1)
+intSize+=1;
+
+Model=malloc((intSize+6)*sizeof(char));
+Model[0]='M';
+Model[1]='o';
+Model[2]='d';
+Model[3]='e';
+Model[4]='l';
+if(Neg)
+Model[5]='-';
+
+snprintf(Model+(Neg? 6:5),intSize+6,"%lld",i);
+
+Model[intSize+(Neg?6:5)]='\0';
+
+printf("\n Saving to Model:%s",Model);
+
+if(access(Model,R_OK)==0){
+printf("\n File exists... Overwrite  >0 Yes <=0 NO?");
+i=ParseInt();
+if(i>0){
+Write=true;
+}
+}
+else{
+Write=true;
+}
+Quit=true;
+//free(Model);
+//Model=NULL;
+}while(!Quit);
+
+//char* Act = NULL;
+
+char Act[12];
+
+if(Write){
+FILE* F = fopen(Model,"w+");
+if(F==NULL){
+printf("Error Opening model to save");
+exit(-1);
+}
+
+//NN Name, and information...
+fprintf(F,"%s",Model);
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+fprintf(F,"%d",(*N)->ErrorType);
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+fprintf(F,"%d",((*N)->Normalized? 1:0));
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+
+Layer** L = (*N)->Layers;
+
+//Get Previous Most layer
+/*
+if(L!=NULL)
+while((*L)->Prev!=NULL){
+Layer**L2 = ((*L)->Prev);
+L=L2;
+}
+*/
+
+intSize = (*L)->ActivationFunction==0? 1:ceil(log10((*L)->ActivationFunction));
+
+if((*L)->ActivationFunction<=10){
+intSize+=1;
+}
+
+printf("\n IntSize:%zu",intSize);
+
+//Act=malloc((2+intSize)*sizeof(char));
+bzero(Act,12);
+if(Act==NULL){
+printf("\n Error mallocing for activation name");
+exit(-1);
+}
+Act[0]='A';
+snprintf(Act+1,2+intSize,"%d",(*L)->ActivationFunction);
+//Start from firsy layer on
+
+fprintf(F,"%s","I");
+
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+
+fprintf(F,"%s",Act);
+
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+
+//fprintf(F,"%c",'\n');
+
+//free(Act);
+//Act=NULL;
+
+//fclose(F);
+SaveMatrix((*L)->Activation,F);
+
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+
+//fprintf(F,"%c",'\n');
+
+Layer**L3=((*L)->Next);
+L=L3;
+
+i=0;
+
+while(L!=NULL){
+
+intSize = (*L)->ActivationFunction == 0? 1:ceil(log10((*L)->ActivationFunction));
+
+if((*L)->ActivationFunction<=10){
+intSize+=1;
+}
+
+bzero(Act,12);
+
+if((*L)->Next==NULL){
+fprintf(F,"%s","O");
+}
+else{
+fprintf(F,"%s","H");
+//fprintf(F,"%c",'\n');
+//fprintf(F,"%c",Delim);
+}
+
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+
+
+//Act=malloc((2+intSize)*sizeof(char));
+Act[0]='A';
+snprintf(Act+1,2+intSize,"%d",(*L)->ActivationFunction);
+//Start from firsy layer on
+//
+fprintf(F,"%s",Act);
+//
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+//fprintf(F,"%c",'\n');
+
+//free(Act);
+//Act=NULL;
+
+SaveMatrix((*L)->Activation,F);
+bzero(Act,12);
+Act[0]='W';
+
+
+fprintf(F,"%c",Delim);
+
+//fprintf(F,"%s",Act);
+fprintf(F,"%c",'\n');
+fprintf(F,"%s",Act);
+
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+
+SaveMatrix((*L)->Weights,F);
+bzero(Act,12);
+Act[0]='E';
+
+
+fprintf(F,"%c",Delim);
+
+//fprintf(F,"%s",Act);
+fprintf(F,"%c",'\n');
+fprintf(F,"%s",Act);
+
+fprintf(F,"%c",Delim);
+//fprintf(F,"%c",'\n');
+
+SaveMatrix((*L)->Error,F);
+bzero(Act,12);
+Act[0]='G';
+Act[1]='W';
+
+//fprintf(F,"%c",Delim);
+fprintf(F,"%c",Delim);
+//fprintf(F,"%s",Act);
+fprintf(F,"%c",'\n');
+fprintf(F,"%s",Act);
+
+fprintf(F,"%c",Delim);
+fprintf(F,"%c",'\n');
+
+SaveMatrix((*L)->GradientWeights,F);
+
+//fprintf(F,"%c",'\n');
+fprintf(F,"%c",Delim);
+//fprintf(F,"%c",'\n');
+
+Layer**L2 = ((*L)->Next);
+L=L2;
+
+i+=1;
+
+}
+
+
+
+//free(Act);
+//Act=NULL;
+}
+
+free(Model);
+Model=NULL;
 
 }
 

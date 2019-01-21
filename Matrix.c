@@ -149,7 +149,7 @@ void toString(Matrix* A);
 //////////////////////////////////////////////////////////////////////////////////
 MatrixFileStream* ReadFile(MatrixFileStream*MFS,char Delimiter);
 
-void SaveMatrix(Matrix* M, char* FileName);
+void SaveMatrix(Matrix* M, FILE* F);
 
 void WriteFile(FILE* F,Matrix* M);
 
@@ -1398,12 +1398,17 @@ Columns+=1;
 }
 //Num Rows and Columns to store all values
 //
-printf("\n SIZE:%lu  ROWS:%lu COLUMNS:%lu\n",Size,++Rows,COLUMNS);
+Rows+=1;
+printf("\n SIZE:%lu  ROWS:%lu COLUMNS:%lu\n",Size,Rows,COLUMNS);
 //free(Entries[Rows]);
 //
 //
 
 Matrix* M = malloc(sizeof(Matrix));
+if(M==NULL){
+printf("\nFAILED TO Get New Matrix");
+exit(-1);
+}
 
 M->Rows = Rows;
 M->Columns=COLUMNS;
@@ -1415,8 +1420,8 @@ if(M->Entries==NULL){
         exit(-1);
 }
 
-size_t j=0;
-size_t k=0;
+long long int j=0;
+long long int k=0;
 
 for(j=0; j<Rows;j+=1){
 	M->Entries[j]=malloc((COLUMNS)*sizeof(long double));
@@ -1432,8 +1437,12 @@ for(j=0; j<Rows;j+=1){
 	Entries[j]=NULL;                     
                 printf("\n");
 }
+
+if(Entries!=NULL){
 free(Entries);
 Entries=NULL;
+}
+
 //DeleteData(Data,Rows,COLUMNS);
 /*
 Matrix* M = malloc(sizeof(Matrix));
@@ -1450,13 +1459,13 @@ return MFS1;
 //fseek(F,PrevPosition,SEEK_SET);
 //
 
-void SaveMatrix(Matrix*M,char* FileName){
+void SaveMatrix(Matrix*M,FILE* F){
 if(M==NULL){
 printf("\n No matrix to Save");
 return;
 }
 
-if(access(FileName,F_OK)!=-1){
+/*if(access(FileName,F_OK)!=-1){
 //File Exists
 printf("\n File:%s Exists\nOverWrite? >=1 Yes <=0 No:",FileName);
 int i;
@@ -1468,10 +1477,11 @@ fclose(F);
 }
 }
 else{
-FILE* F = fopen(FileName,"w+");
+*/
+//FILE* F = fopen(FileName,"w+");
 WriteFile(F,M);
-fclose(F);
-}
+//fclose(F);
+//}
 }
 
 //Writes to file regardless of position
@@ -1479,12 +1489,16 @@ void WriteFile(FILE* F, Matrix* M){
 
 unsigned long int i=0;
 unsigned long int j=0;
+/*
 fprintf(F,"\n%s\n",M->Name);
 fprintf(F,"%lu\n",M->Rows);
 fprintf(F,"%lu\n",M->Columns);
+*/
 for(i=0; i<M->Rows;i+=1){
 for(j=0; j<M->Columns;j+=1){
-fprintf(F,"%Lf ",M->Entries[i][j]);
+fprintf(F,"%Lf",M->Entries[i][j]);
+fprintf(F,"%c",' ');
+printf("\n STORING:%Lf",M->Entries[i][j]);
 }
 fprintf(F,"\n");
 }
