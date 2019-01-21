@@ -15,7 +15,7 @@
 typedef struct String_{
 //
 ////Length of String
-int Length;
+//int Length;
 //
 char* Name;
 //
@@ -51,26 +51,31 @@ printf("(null)");
 //Concat String object with string literal
 String* Concat(String* s1, char*s2){
 String* s = NULL;
-if(s1==NULL){
-s = malloc(sizeof(String));
-}
-else
-s=s1;
 if(s2==NULL){
 printf("\nMust enter some string");
 exit(-1);
 }
-int l1 = s->Name==NULL? 0:strlen(s->Name);
+
+if(s1==NULL){
+s = malloc(sizeof(String));
+s->Name="";
+}
+
+else
+s=s1;
+
+size_t l1 = s->Name==NULL? 0:strlen(s->Name);
 
 char* c = malloc(l1+1+strlen(s2)*sizeof(char));
 
 if(l1>0)
 strncat(c,s->Name,l1);
+
 strncat(c,s2,strlen(s2));
 
 s->Name=c;
 
-s->Length=strlen(s->Name);
+//s->Length=strlen(s->Name);
 return s;
 }
 

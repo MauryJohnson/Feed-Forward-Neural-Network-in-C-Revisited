@@ -27,14 +27,20 @@ char* Name;
 }String;
 */
 
+typedef struct Data_{
+
+long double Entry;
+
+}Data;
+
 typedef struct Matrix__{
 //The name of the matrix, useful
 char* Name;
 //Number of rows of matrix
-long long int Rows;
+size_t Rows;
 //
 ////Number of columns of matrix
-long long int Columns;
+size_t Columns;
 //
 ////All entries of matrix, 2D!!!!!!!
 long double ** Entries;
@@ -97,22 +103,22 @@ Matrix * NormalizeValuesMR(Matrix*A);
 void NormalizeM(Matrix* A, Matrix*Norms,bool Transposed);
 
 //Multiply Row by value
-void MultiplyRowM(Matrix* M,long long int Row, long double Value);
+void MultiplyRowM(Matrix* M,unsigned long int Row, long double Value);
 //Add Row by vakue
-void AddRowM(Matrix* M, long long int Column,long long int Column2, long double Value);
+void AddRowM(Matrix* M, unsigned long int Column,unsigned long int Column2, long double Value);
 /////////////////////////////////////////////////////////////////////////////////////
 
 //Matrix Data Creation/Deletion
 ///////////////////////////////////////////////////////////////////////////////////
 //Create double** entries
-long double** CreateE(/*long double**e,*/int Rows,int Columns);
+long double** CreateE(/*long double**e,*/size_t Rows,size_t Columns);
 //Create Matrix given double[][] 2d array, obviously return this
 //new matrix
 Matrix* CreateMR(long double** e,int Rows,int Columns,char*N);
 //Delete all matrices
 void DeleteMatrixM(Matrix * M);
 //Delete all doubles
-void DeleteEntries(long double**E,long long int rows);
+void DeleteEntries(long double**E,unsigned long int rows);
 ///////////////////////////////////////////////////////////////////////////////////
 
 //ACTIVATION FUNCTIONS AND DERIVATIVE OPERATIONS
@@ -147,7 +153,7 @@ void SaveMatrix(Matrix* M, char* FileName);
 
 void WriteFile(FILE* F,Matrix* M);
 
-long long int GetColumns(FILE* F);
+size_t GetColumns(FILE* F);
 
 typedef struct RetCase_{
 
@@ -177,13 +183,13 @@ char* NextString(FILE*F,char D);
 /*
 int main(int argc, char** argv){
 //Matrix* M = malloc(sizeof(Matrix));
-printf("\n LONG Double is size of:%lu\nDouble is size of:%lu\nLONG INT SIZE:%lu\nINT SIZE:%lu",sizeof(long double),sizeof(double),sizeof(long long int),sizeof(int));
+printf("\n LONG Double is size of:%lu\nDouble is size of:%lu\nLONG INT SIZE:%lu\nINT SIZE:%lu",sizeof(long double),sizeof(double),sizeof(unsigned long int),sizeof(int));
 
 long double D = 0.00000001000000000000001111111111;
-long long int i = 10000000000000000000000;
+unsigned long int i = 10000000000000000000000;
 
-printf("\n LONG DOUBLE:%LG",D);
-printf("\nLONG INT:%lld",i);
+printf("\n LONG DOUBLE:%Lf",D);
+printf("\nLONG INT:%lu",i);
 
 MatrixFileStream* MFS1 = NewMatrixFileStream("M1");//malloc(sizeof(MatrixFileStream));
 MatrixFileStream* MFS2 = NewMatrixFileStream("M2");//malloc(sizeof(MatrixFileStream));
@@ -264,8 +270,8 @@ exit(-1);
 //return;
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<B->Columns;j+=1){
 A->Entries[i][j]+=Mult*B->Entries[i][j];
@@ -289,8 +295,8 @@ return NULL;
 
 long double** Entries = malloc(A->Rows*sizeof(long double*));
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 for(i=0;i<A->Rows;i+=1){
 Entries[i]=malloc(B->Columns*sizeof(long double));
 for(j=0;j<B->Columns;j+=1){
@@ -319,9 +325,9 @@ return;
 
 //Matrix* A = CopyMatrixMR(B,"Matrix B Copy");
 
-long long int i=0;
-long long int j=0;
-long long int k=0;
+unsigned long int i=0;
+unsigned long int j=0;
+unsigned long int k=0;
 
 double divisor = 1.0;
 Matrix* EMatrix = RREFMR(A,"Echelon Matrix");
@@ -335,7 +341,7 @@ MultiplyRowM(A,i,1.0/divisor);
 MultiplyRowM(EMatrix,i,1.0/divisor);
 }
 else{
-printf("\n CANNOT REDUCE COLUMN:%lld",i);
+printf("\n CANNOT REDUCE COLUMN:%lu",i);
 return;
 }
 }
@@ -386,8 +392,8 @@ printf("\n NULL MATRIX TO TRANSPOSE");
 exit(0);
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 long double** TM = malloc(A->Columns*sizeof(long double*));
 while(j<A->Columns){
@@ -416,8 +422,8 @@ exit(0);
 
 long double** Entries = malloc(A->Columns*sizeof(long double*));
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 Entries[i]=malloc(A->Rows*sizeof(long double));
@@ -460,7 +466,7 @@ else if(Power<0){
 
 InverseM(B,"Inverse");
 
-long long int i=0;
+unsigned long int i=0;
 Power=Power*-1;
 
 for(i=0;i<Power;i+=1)
@@ -469,7 +475,7 @@ MultiplyM(B,B,"Inverse Powered");
 }
 else{
 
-long long int i=0;
+unsigned long int i=0;
 
 for(i=0; i<Power;i+=1){
 MultiplyM(B,B,"Matrix Powered");
@@ -504,7 +510,7 @@ else if(Power<0){
 
 InverseM(B,"Inverse");
 
-long long int i=0;
+unsigned long int i=0;
 Power=Power*-1;
 
 for(i=0;i<Power;i+=1)
@@ -513,7 +519,7 @@ MultiplyM(B,B,"Inverse Powered");
 }
 else{
 
-long long int i=0;
+unsigned long int i=0;
 
 for(i=0; i<Power;i+=1){
 MultiplyM(B,B,"Matrix Powered");
@@ -539,9 +545,9 @@ return NULL;
 
 Matrix* A = CopyMatrixMR(B,"Matrix B Copy");
 
-long long int i=0;
-long long int j=0;
-long long int k=0;
+unsigned long int i=0;
+unsigned long int j=0;
+unsigned long int k=0;
 
 double divisor = 1.0;
 Matrix* EMatrix = RREFMR(A,"Echelon Matrix");
@@ -555,7 +561,7 @@ MultiplyRowM(A,i,1.0/divisor);
 MultiplyRowM(EMatrix,i,1.0/divisor);
 }
 else{
-printf("\n CANNOT REDUCE COLUMN:%lld",i);
+printf("\n CANNOT REDUCE COLUMN:%lu",i);
 return NULL;
 }
 }
@@ -607,12 +613,12 @@ if(Entries==NULL){
 printf("\n CopyMatrixMR Entries NULL");
 exit(0);
 }
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 for(i=0;i<A->Rows;i+=1){
 Entries[i]=malloc(A->Columns*sizeof(long double));
 if(Entries[i]==NULL){
-printf("\n Entries[%lld} NULL CopyMR",i);
+printf("\n Entries[%lu} NULL CopyMR",i);
 exit(0);
 }
 for(j=0;j<A->Columns;j+=1){
@@ -643,8 +649,8 @@ exit(-1);
 
 long double ** Entries = malloc(A->Columns*sizeof(long double*));
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Columns;i+=1){
 Entries[i]=malloc(A->Columns*sizeof(long double));
@@ -675,8 +681,8 @@ exit(-1);
 
 long double ** Entries = malloc(A->Columns*sizeof(long double*));
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Columns;i+=1){
 Entries[i]=malloc(A->Columns*sizeof(long double));
@@ -713,15 +719,15 @@ if(Entries==NULL){
 printf("\n MultiplyM Entries NULL");
 exit(0);
 }
-long long int i=0;
-long long int j=0;
-long long int l=0;
+unsigned long int i=0;
+unsigned long int j=0;
+unsigned long int l=0;
 long double sum=0;
 
 for(i=0;i<A->Rows;i+=1){
 Entries[i]=malloc(B->Columns*sizeof(long double));
 if(Entries[i]==NULL){
-printf("\n Entries[%lld} NULL MultiplyM",i);
+printf("\n Entries[%lu} NULL MultiplyM",i);
 exit(0);
 }
 for(j=0;j<B->Columns;j+=1){
@@ -756,15 +762,15 @@ if(Entries==NULL){
 printf("\n MultiplyMR Entries NULL");
 exit(0);
 }
-long long int i=0;
-long long int j=0;
-long long int l=0;
+unsigned long int i=0;
+unsigned long int j=0;
+unsigned long int l=0;
 long double sum=0;
 
 for(i=0;i<A->Rows;i+=1){
 Entries[i] = malloc(B->Columns*sizeof(long double));
 if(Entries[i]==NULL){
-printf("\n Entries[%lld} NULL MultiplyMR",i);
+printf("\n Entries[%lu} NULL MultiplyMR",i);
 exit(0);
 }
 for(j=0;j<B->Columns;j+=1){
@@ -806,8 +812,8 @@ printf("\n Numm matrices for normalizeM");
 exit(-2);
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
@@ -824,7 +830,7 @@ A->Entries[i][j]/=Norms->Entries[i][j];
 //
 
 ////Multiply Row by value
-void MultiplyRowM(Matrix* M,long long int Row, long double Value){
+void MultiplyRowM(Matrix* M,unsigned long int Row, long double Value){
 if(M==NULL){
 printf("\n MuitiplyRowM NULL Matrix");
 exit(0);
@@ -833,13 +839,13 @@ if(Row>=M->Rows || Row<0){
 printf("\nInvalid Row MultiplyRowM");
 exit(0);
 }
-long long int j=0;
+unsigned long int j=0;
 for(j=0;j<M->Columns;j+=1){
 M->Entries[Row][j]*=Value;
 }
 }
 
-void AddRowM(Matrix*M,long long int Column1,long long int Column2, long double Value){
+void AddRowM(Matrix*M,unsigned long int Column1,unsigned long int Column2, long double Value){
 if(M==NULL){
 printf("\n Matrix AddRowM NULL");
 exit(-1);
@@ -848,14 +854,14 @@ if(Column1<0 || Column1>=M->Columns || Column2<0||Column2>=M->Columns){
 printf("\n AddRowM Columns invalid");
 exit(-1);
 }
-long long int j=0;
+unsigned long int j=0;
 for(j=0;j<M->Rows;j+=1){
 M->Entries[j][Column2]+=Value*M->Entries[j][Column1];
 }
 }
 
 
-long double** CreateE(/*long double**e,*/int Rows,int Columns){
+long double** CreateE(/*long double**e,*/size_t Rows,size_t Columns){
 if(/*e==NULL || */Rows<=0 || Columns<=0){
 printf("\nNo entries");
 exit(-1);
@@ -865,8 +871,8 @@ if(Entries==NULL){
 printf("\n Error Creating Entires CreateE");
 exit(-1);
 }
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 for(i=0;i<Rows;i+=1){
 Entries[i]=malloc(Columns*sizeof(long double));
 if(Entries[i]==NULL){
@@ -915,8 +921,8 @@ M=NULL;
 }
 
 ////Delete all doubles
-void DeleteEntries(long double**E,long long int Rows){
-long long int i=0;
+void DeleteEntries(long double**E,unsigned long int Rows){
+unsigned long int i=0;
 for(i=0;i<Rows;i+=1){
 free(E[i]);
 E[i]=NULL;
@@ -933,8 +939,8 @@ printf("\n No Matrix to Sigmoid");
 exit(0);
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
@@ -951,8 +957,8 @@ printf("\n No Matrix to Relu");
 exit(0);
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
@@ -972,11 +978,11 @@ printf("\nNo Matrix to SoftMax\n");
 exit(-1);
 }
 
-long long int i=0;
+unsigned long int i=0;
 
-long long int j=0;
+unsigned long int j=0;
 
-long long int l=0;
+unsigned long int l=0;
 
 long double** ActualM = malloc(A->Rows*sizeof(long double*));
 
@@ -1015,8 +1021,8 @@ printf("\n No Matrix to DSigmoid");
 exit(-1);
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
@@ -1034,8 +1040,8 @@ printf("\nNo MAtrix to DRelu");
 exit(-1);
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
@@ -1058,8 +1064,8 @@ printf("\n No Matrix to DSoftmax");
 exit(-1);
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
@@ -1071,12 +1077,12 @@ A->Entries[i][j]*=(1-A->Entries[i][j]);
 
 ////Print out name of matrix followed by all of its entries
 void toString(Matrix* A){
-printf("\n%s\n ROWS:%lld COLUMNS:%lld\n",A->Name,A->Rows,A->Columns);
-long long int i=0;
-long long int j=0;
+printf("\n%s\n ROWS:%lu COLUMNS:%lu\n",A->Name,A->Rows,A->Columns);
+unsigned long int i=0;
+unsigned long int j=0;
    for(i=0;i<A->Rows;i+=1){
 	for(j=0;j<A->Columns;j+=1){
-	   printf("%LG ",A->Entries[i][j]);
+	   printf("%Lf ",A->Entries[i][j]);
 	}
 	printf("\n");
    }
@@ -1085,7 +1091,7 @@ long long int j=0;
 
 //Iterate until reach new line, this will be column
 //MUST DEFINE COLUMN AT THE FIRST ROW AT LEAST!!!!!!!!!!
-long long int GetColumns(FILE* F){
+size_t GetColumns(FILE* F){
 
 long PrevPosition = ftell(F);
 
@@ -1093,7 +1099,7 @@ long PrevPosition = ftell(F);
 
 char c;
 
-long long int C=0;
+size_t C=0;
 
 bool Spaces = false;
 
@@ -1111,7 +1117,7 @@ break;
 
 //fseek(F,PrevPosition,SEEK_SET);
 
-//long long int C = 0;
+//unsigned long int C = 0;
 
 bool Dot = false;
 
@@ -1140,7 +1146,7 @@ Spaces=true;
 }
 
 if(c=='\n'){
-printf("\n Made it to final column:%lld\n",C);
+printf("\n Made it to final column:%lu\n",C);
 break;
 }
 
@@ -1188,7 +1194,14 @@ break;
 }
 app[pos]=c;
 pos+=1;
-app=realloc(app,(pos+1)*sizeof(char));
+char* t=realloc(app,(pos+1)*sizeof(char));
+if(t==NULL){
+printf("\n Error realloc for str");
+exit(-1);
+}
+else{
+app=t;
+}
 app[pos]='\0';
 if(app==NULL){
 printf("\n Error Getting Next String");
@@ -1220,10 +1233,10 @@ bool Dot = false;
 
 //R = malloc(sizeof(Ret));
 //long double Ret[2];
-//long long int Line = 0;
+//unsigned long int Line = 0;
 R->Second = -88888888;
 
-int ASize = 1;
+size_t ASize = 1;
 char* app = malloc(ASize*sizeof(char));
 app[0]='\0';
 
@@ -1238,8 +1251,15 @@ if(Dot){
 printf("TWO DOTS IN A DOUBLE NOT ALLOWED!:%s @ LINE:%ld",app,ftell(F));
 exit(-1);
 }
-
-app=realloc(app,(ASize++)*sizeof(char));
+ASize+=1;
+char*t=realloc(app,(ASize)*sizeof(char));
+if(t==NULL){
+printf("\nFailed to realloc for str");
+exit(-1);
+}
+else{
+app=t;
+}
 app[ASize-2] = c;
 
 Dot=true;
@@ -1248,7 +1268,7 @@ else if(c==Delimiter){
 //Delimiter hit, break away return NULL
 //long double D = 0.0;
 
-sscanf(app,"%LG",&(R->Second));
+sscanf(app,"%Lf",&(R->Second));
 
 R->First = 1;
 //Ret[1] = D;
@@ -1262,7 +1282,7 @@ else{
 //if not digit, not., not delimiter
 //long double D = 1.0;
 
-sscanf(app,"%LG",&(R->Second));
+sscanf(app,"%Lf",&(R->Second));
 
 R->First = 0;
 //Ret[1]=D;
@@ -1271,9 +1291,15 @@ return R;
 }
 }
 else{
-
-app=realloc(app,(ASize++)*sizeof(char));
-
+ASize+=1;
+char*t=realloc(app,(ASize)*sizeof(char));
+if(t==NULL){
+printf("\nFailed to realloc for str");
+exit(-1);
+}
+else{
+app=t;
+}
 app[ASize-2] = c;
 
 }
@@ -1301,14 +1327,18 @@ printf("\nUnable to open file:%s",MFS1->FileName);
 exit(-4);
 }
 
-long long int COLUMNS = GetColumns(F);
+size_t COLUMNS = GetColumns(F);
 
-long long int Columns = 0;
-long long int Rows = 0;
+size_t Columns = 0;
+size_t Rows = 0;
 
-long long int Size = 1;
-long double ** Entries = malloc(1*sizeof(long double *));
-Entries[0] = malloc((COLUMNS)*sizeof(long double));
+size_t Size = 1;
+//long double ** Entries = malloc(1*sizeof(long double *));
+//Entries[0] = malloc((COLUMNS)*sizeof(long double));
+
+Data** Entries = malloc(sizeof(Data*));
+
+Entries[0]=malloc((COLUMNS)*sizeof(Data));
 
 while(true){
 
@@ -1319,25 +1349,19 @@ if(R->First==2||R->First==1){
 if(R->First==1){
 
 if(R->Second!=-88888888){
-printf("\n RESULT FINAL:%LG",R->Second);
-Entries[Rows][Columns]=R->Second;
+printf("\n RESULT FINAL:%Lf",R->Second);
+(Entries[Rows][Columns]).Entry=R->Second;
 }
 
 }
-
-/*
-if(Ret!=NULL)
-free(Ret);
-Ret=NULL;
-*/
 
 printf("\n DONE READING");
 break;
 }
 
-printf("\n CASE: %LG",R->First);
+printf("\n CASE: %Lf",R->First);
 
-printf("\n ENTRY: %LG [%lld,%lld] CASE:%LG",R->Second,Rows,Columns,R->First);
+printf("\n ENTRY: %Lf [%lu,%lu] CASE:%Lf",R->Second,Rows,Columns,R->First);
 
 if(R->Second!=-88888888){
 //Columns+=1;
@@ -1348,48 +1372,75 @@ Rows+=1;
 }
 //
 if(Rows>=Size){
+
 Size+=1;
-Entries[Rows] = malloc((COLUMNS)*sizeof(long double));
+
+Data** t =realloc(Entries,(Rows+1)*sizeof(Data*));
+if(t==NULL){
+printf("\n Error Reading more rows");
+exit(-2);
+}
+else{
+Entries=t;
+}
+Entries[Rows] = malloc((COLUMNS)*sizeof(Data));
+if(Entries[Rows]==NULL){
+printf("\n Error Reading more rows");
+exit(-2);
+}
 }
 //
-Entries[Rows][Columns] = R->Second;
+Entries[Rows][Columns].Entry = R->Second;
 //
 Columns+=1;
 }
-/*
-free(Result);
-Result=NULL;
-*/
-//if(R!=NULL){
-//free(R);
-//R=NULL;
-//}
 
 }
-/*
-if(R!=NULL){
-free(R);
-R=NULL;
-}
-*/
 //Num Rows and Columns to store all values
 //
-printf("\n ROWS:%lld COLUMNS:%lld\n",++Rows,COLUMNS);
+printf("\n SIZE:%lu  ROWS:%lu COLUMNS:%lu\n",Size,++Rows,COLUMNS);
+//free(Entries[Rows]);
 //
-long long int j=0;
-long long int k=0;
-for(j=0; j<Rows;j+=1){
-        for(k=0; k<COLUMNS;k+=1){
-                        printf("%LG ",Entries[j][k]);
-                                }
-                                        printf("\n");
-}
+//
 
 Matrix* M = malloc(sizeof(Matrix));
+
 M->Rows = Rows;
 M->Columns=COLUMNS;
 
-M->Entries = Entries;
+M->Entries=malloc(Rows*sizeof(long double*));
+
+if(M->Entries==NULL){
+        printf("\n Not enough memory for matrix read");
+        exit(-1);
+}
+
+size_t j=0;
+size_t k=0;
+
+for(j=0; j<Rows;j+=1){
+	M->Entries[j]=malloc((COLUMNS)*sizeof(long double));
+	if(M->Entries[j]==NULL){
+	printf("\n Not enough memory for matrix read");
+	exit(-1);
+	}	
+        for(k=0; k<COLUMNS;k+=1){
+                        printf("%Lf ",Entries[j][k].Entry);
+                        M->Entries[j][k]=Entries[j][k].Entry;
+	}
+	free(Entries[j]);
+	Entries[j]=NULL;                     
+                printf("\n");
+}
+free(Entries);
+Entries=NULL;
+//DeleteData(Data,Rows,COLUMNS);
+/*
+Matrix* M = malloc(sizeof(Matrix));
+M->Rows = Rows;
+M->Columns=COLUMNS;
+*/
+//M->Entries = Entries;
 
 MFS1->F=F;
 MFS1->M=M;
@@ -1426,14 +1477,14 @@ fclose(F);
 //Writes to file regardless of position
 void WriteFile(FILE* F, Matrix* M){
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 fprintf(F,"\n%s\n",M->Name);
-fprintf(F,"%lld\n",M->Rows);
-fprintf(F,"%lld\n",M->Columns);
+fprintf(F,"%lu\n",M->Rows);
+fprintf(F,"%lu\n",M->Columns);
 for(i=0; i<M->Rows;i+=1){
 for(j=0; j<M->Columns;j+=1){
-fprintf(F,"%LG ",M->Entries[i][j]);
+fprintf(F,"%Lf ",M->Entries[i][j]);
 }
 fprintf(F,"\n");
 }
@@ -1442,11 +1493,15 @@ fprintf(F,"\n");
 
 //Close file, not delete matrix
 void CloseMFS(MatrixFileStream* MFS){
-if(MFS!=NULL)
+if(MFS!=NULL){
 if(MFS->F!=NULL)
 fclose(MFS->F);
+//if(MFS->M!=NULL)
+//free(MFS->M);
+//MFS->M=NULL;
 free(MFS);
 MFS=NULL;
+}
 }
 
 MatrixFileStream* NewMatrixFileStream(char* Name){
@@ -1470,8 +1525,8 @@ printf("\n Matrix is NULL RandomizeM");
 exit(-2);
 }
 
-long long int i=0;
-long long int j=0;
+unsigned long int i=0;
+unsigned long int j=0;
 
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
@@ -1503,3 +1558,4 @@ Cat = Caty;
 return Cat;
 }
 */
+

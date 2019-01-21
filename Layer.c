@@ -22,23 +22,23 @@ Matrix* Error;
 Matrix* GradientWeights;
 
 //Next Layer
-struct Layer_* Next;
+struct Layer_** Next;
 
 //Previous Layer
-struct Layer_* Prev;
+struct Layer_** Prev;
 
 }Layer;
 /////////////////////////////////////////////////////////////////////////////////////
 //Create New Layer.. IMPORTENT TO KEEP TRACK OF NEXT AND PREV, SET PREV by passing
 //Parameter Layer Prev
 //Set Next by setting next to Result of NewLaye
-Layer *NewLayer(Layer* Prev,Matrix* M,int Type, int ActivationType);
+Layer **NewLayer(Layer** Prev,Matrix* M,int Type, int ActivationType);
 
 //Add new layer
 //void AddLayer(Layer*Layers,Layer*NewL);
 
 //Delete all layers of NN;
-void DeleteLayers(Layer* Head);
+void DeleteLayers(Layer** Head);
 
 //Print ALL Layers Starting from begin
 void PrintLayers(Layer* L);
@@ -113,25 +113,25 @@ printf("\n No Layers");
 return;
 }
 
-Layer*P = NULL;
+Layer**P = NULL;
 
 if(L->Prev!=NULL){
-P=L->Prev;
-while(P->Prev!=NULL){
+P=(L->Prev);
+while((*P)->Prev!=NULL){
 printf("\nGOING TO PREV");
-Layer* P2 = P->Prev;
+Layer** P2 = (*P)->Prev;
 P=P2;
 }
 }
 else{
-P=L;
+P=&L;
 }
 
-long long int i=0;
+unsigned long int i=0;
 while(P!=NULL){
-printf("\nPrint Layer:%lld",i);
-PrintLayer(P);
-Layer*P2=P->Next;
+printf("\nPrint Layer:%lu",i);
+PrintLayer(*P);
+Layer**P2=(*P)->Next;
 P=P2;
 i+=1;
 }
@@ -158,28 +158,33 @@ L2=NewL;
 */
 
 //Create a new valid layer for neural net
-Layer *NewLayer(Layer* Prev,Matrix* M,int Type, int ActivationType){
-Layer* L =malloc(sizeof(Layer));
+Layer ** NewLayer(Layer** Prev,Matrix* M,int Type, int ActivationType){
+
+Layer** L =malloc(sizeof(Layer*));
+L[0]=malloc(sizeof(Layer));
+
 if(M==NULL){
 printf("\n FAILURE GETTING MATRIX");
 exit(-3);
 }
+
 if(L==NULL){
 printf("\n FAILURE Error creating new layer!");
 exit(-4);
 }
+
 switch(Type){
 case 0:
-	L->Activation = M;
-	L->Type='I';
+	(*L)->Activation = M;
+	(*L)->Type='I';
 	break;
 case 1:
-	L->Weights=M;
-	L->Type = 'H';
+	(*L)->Weights=M;
+	(*L)->Type = 'H';
 	break;
 case 2:
-	L->Activation=M;
-	L->Type = 'O';
+	(*L)->Activation=M;
+	(*L)->Type = 'O';
 	break;
 default:
 	printf("\n Error! Invalid Entries for New Layer!");
@@ -191,13 +196,13 @@ printf("\nNo Activation Function Specified");
 exit(-3);
 }
 
-L->ActivationFunction=ActivationType;
+(*L)->ActivationFunction=ActivationType;
 
 //Previous layer created
-L->Prev = Prev;
+(*L)->Prev = Prev==NULL? NULL:Prev;
 
 //Brand ney layer
-L->Next = NULL;
+(*L)->Next = NULL;
 
 return L;
 }
@@ -205,35 +210,41 @@ return L;
 //Delete ALL Layers... Start By Deleting ALL Prev and Next Layers along with their
 //Matrices
 //Then at end delete curr layer AND All of its Matrices
-void DeleteLayers(Layer* L){
+void DeleteLayers(Layer** L){
 if(L==NULL){
 printf("\n Layer already deleted");
 return;
 }
 
-Layer*P=L->Prev;
-Layer*N=L->Next;
+Layer**P=(*L)->Prev;
+Layer**N=(*L)->Next;
 Matrix* M = NULL;
 while(P!=NULL && N!=NULL){
 if(P!=NULL){
 
-M=P->Activation;
-if(M!=NULL)
-DeleteMatrixM(M);
+printf("\n Deleting:");
+PrintLayer(*P);
 
-M=P->Weights;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=P->Activation;
+if((*P)->Activation!=NULL)
+DeleteMatrixM((*P)->Activation);
 
-M=P->Error;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=P->Weights;
+if((*P)->Weights!=NULL)
+DeleteMatrixM((*P)->Weights);
 
-M=P->GradientWeights;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=P->Error;
+if((*P)->Error!=NULL)
+DeleteMatrixM((*P)->Error);
 
-Layer* P2=P->Prev;
+//M=P->GradientWeights;
+if((*P)->GradientWeights!=NULL)
+DeleteMatrixM((*P)->GradientWeights);
+
+Layer** P2=(*P)->Prev;
+
+free(*P);
+*P=NULL;
 free(P);
 P=NULL;
 P=P2;
@@ -241,23 +252,29 @@ P=P2;
 
 if(N!=NULL){
 
-M=N->Activation;
-if(M!=NULL)
-DeleteMatrixM(M);
+printf("\n\n Deleting:\n\n");
+PrintLayer(*N);
 
-M=N->Weights;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=N->Activation;
+if((*N)->Activation!=NULL)
+DeleteMatrixM((*N)->Activation);
 
-M=N->Error;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=N->Weights;
+if((*N)->Weights!=NULL)
+DeleteMatrixM((*N)->Weights);
 
-M=N->GradientWeights;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=N->Error;
+if((*N)->Error!=NULL)
+DeleteMatrixM((*N)->Error);
 
-Layer* N2 = N->Next;
+//M=N->GradientWeights;
+if((*N)->GradientWeights!=NULL)
+DeleteMatrixM((*N)->GradientWeights);
+
+Layer** N2 = (*N)->Next;
+//free(&N);
+free(*N);
+*N=NULL;
 free(N);
 N=NULL;
 N=N2;
@@ -265,50 +282,55 @@ N=N2;
 
 }
 
-if(L!=NULL){
-M=L->Activation;
-if(M!=NULL)
-DeleteMatrixM(M);
+if((*L)!=NULL){
+//M=L->Activation;
+if((*L)->Activation!=NULL)
+DeleteMatrixM((*L)->Activation);
 
-M=L->Weights;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=L->Weights;
+if((*L)->Weights!=NULL)
+DeleteMatrixM((*L)->Weights);
 
-M=L->Error;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=L->Error;
+if((*L)->Error!=NULL)
+DeleteMatrixM((*L)->Error);
 
-M=L->GradientWeights;
-if(M!=NULL)
-DeleteMatrixM(M);
+//M=L->GradientWeights;
+if((*L)->GradientWeights!=NULL)
+DeleteMatrixM((*L)->GradientWeights);
+
+free((*L));
+(*L)=NULL;
 
 free(L);
 L=NULL;
-}
 
 }
 
-void SetGradientWeights(Layer* L, Matrix*GW){
+}
+
+void SetGradientWeights(Layer** L, Matrix*GW){
 if(L==NULL){
 printf("Layer is NULL! FAILURE TO SET");
 exit(-4);
 }
-if(L->GradientWeights!=NULL){
-DeleteMatrixM(L->GradientWeights);
+if((*L)->GradientWeights!=NULL){
+DeleteMatrixM((*L)->GradientWeights);
 }
-L->GradientWeights=GW;
+(*L)->GradientWeights=GW;
 }
 
-void SetWeights(Layer* L,Matrix* W){
+void SetWeights(Layer** L,Matrix* W){
 if(L==NULL){
 printf("Layer is NULL! FAILURE TO SET");
 exit(-4);
 }
 
-if(L->Weights!=NULL)
-DeleteMatrixM(L->Weights);
-L->Weights=W;
+if((*L)->Weights!=NULL)
+DeleteMatrixM((*L)->Weights);
+(*L)->Weights=W;
 }
+
 Matrix* GetWeights(Layer*L){
 if(L==NULL){
 printf("Layer is NULL! FAILURE TO GET");
@@ -318,14 +340,14 @@ exit(-4);
 return L->Weights;
 }
 
-void SetActivation(Layer*L,Matrix* A){
+void SetActivation(Layer**L,Matrix* A){
 if(L==NULL){
 printf("Layer is NULL! FAILURE TO SET");
 exit(-4);
 }
-if(L->Activation!=NULL)
-DeleteMatrixM(L->Activation);
-L->Activation=A;
+if((*L)->Activation!=NULL)
+DeleteMatrixM((*L)->Activation);
+(*L)->Activation=A;
 }
 
 Matrix* GetActivation(Layer*L){
@@ -337,15 +359,15 @@ exit(-4);
 return L->Activation;
 }
 
-void SetError(Layer*L,Matrix*E){
+void SetError(Layer**L,Matrix*E){
 if(L==NULL){
 printf("Layer is NULL! FAILURE TO SET");
 exit(-4);
 }
-if(L->Error!=NULL){
-DeleteMatrixM(L->Error);
+if((*L)->Error!=NULL){
+DeleteMatrixM((*L)->Error);
 }
-L->Error=E;
+(*L)->Error=E;
 }
 
 Matrix* GetError(Layer*L){

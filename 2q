@@ -14,7 +14,7 @@ bool Normalized;
 
 //Layers of neural network
 //STARTS AT INPUT LAYER
-Layer** Layers;
+Layer* Layers;
 
 }NeuralNetwork;
 /*
@@ -26,7 +26,7 @@ long double Second;
 }Ret;
 */
 //Append Layer to Neural Network
-void AddLayer(NeuralNetwork** N,Layer**L);
+void AddLayer(NeuralNetwork* N,Layer**L);
 
 //Print entire network
 void PrintNetwork(NeuralNetwork*N);
@@ -35,10 +35,10 @@ void PrintNetwork(NeuralNetwork*N);
 NeuralNetwork* CreateNeuralNetwork(Layer* AllLayers);
 
 //Delete NN
-void DeleteNetwork(NeuralNetwork**N);
+void DeleteNetwork(NeuralNetwork*N);
 
 //Given filename, parse all layers for neural network
-NeuralNetwork** ParseLayers(char* FileName,char Delim);
+NeuralNetwork* ParseLayers(char* FileName,char Delim);
 
 //Parse integer from user input
 int ParseInt();
@@ -46,17 +46,12 @@ int ParseInt();
 //Parse double from user input
 long double ParseDouble();
 
-Layer** L;
-NeuralNetwork**N;
-
 
 //ARGV[1] CAN BE ARGUMENT FOR FILE
 //ARGV[2] CAN BE ARGUMENT FOR DELIMITER
 int main(int argc, char**argv){
 Layer* AL;
-
-//NeuralNetwork**N=NULL;
-
+NeuralNetwork*N=NULL;
 if(argc>2){
 
 //DeleteNetwork(ParseLayers(argv[1],argv[2][0]));
@@ -66,21 +61,21 @@ N = (ParseLayers(argv[1],argv[2][0]));
 //DeleteNetwork(N);
 }
 else{
-//N= CreateNeuralNetwork(NULL);
+N= CreateNeuralNetwork(NULL);
 
 }
 //free(N->Name);
-//DeleteString(N->Name);
-//free(N);
+DeleteString(N->Name);
+free(N);
 
-PrintNetwork(*N);
-DeleteNetwork(N);
-//
+//PrintNetwork(N);
+//DeleteNetwork(N);
+
 return 0;
 }
 
 //Assume that new layer is already set
-void AddLayer(NeuralNetwork**N,Layer**NL){
+void AddLayer(NeuralNetwork*N,Layer**NL){
 if(N==NULL){
 printf("\n Neural Network is NULL");
 exit(-1);
@@ -91,22 +86,21 @@ exit(-1);
 }
 
 //Layer * L = N->Layers;
-if((*N)->Layers==NULL){
-(*N)->Layers = (NL);
-Layer** I = (*N)->Layers;
-(*I)->Next=NULL;
-(*I)->Prev=NULL;
+if(N->Layers==NULL){
+N->Layers =*NL;
+N->Layers->Next=NULL;
+N->Layers->Prev=NULL;
 return;
 }
 
-Layer**L=(*N)->Layers;
+Layer*L=N->Layers;
 
-while(((*L)->Next)!=NULL){
-Layer** L2=((*L)->Next);
+while(L->Next!=NULL){
+Layer* L2=L->Next;
 L=L2;
 }
 
-(*L)->Next=(NL);
+L->Next=*NL;
 //L->Prev=NULL;
 //L->Next->Next=NULL;
 //L->Next->Prev=L;
@@ -163,11 +157,11 @@ exit(-1);
 Matrix* IN = CreateMR(
 CreateE(LayerSize,1),LayerSize,1,"Input");
 
-Layer** IL = NewLayer(NULL,IN,0,0);
+Layer* IL = NewLayer(NULL,IN,0,0);
 
 N->Layers=IL;
 
-Prev=(N->Layers);
+Prev=&(N->Layers);
 
 //PrintLayers(N->Layers);
 
@@ -226,10 +220,10 @@ Matrix* Weights = CreateMR(CreateE(Rows,Columns+1),Rows,Columns+1,"");
 
 RandomizeM(Weights);
 
-Layer** H = NewLayer(Prev,Weights,1,Activation);
-//Layer**H=&H2;
+Layer* H2 = NewLayer(Prev,Weights,1,Activation);
+Layer**H=&H2;
 
-AddLayer(&N,H);
+AddLayer(N,H);
 
 //PrintLayer(H);
 
@@ -246,9 +240,9 @@ else{
 Layer* L2 = AL;
 Layer**L=&L2;
 while(L!=NULL){
-AddLayer(&N,L);
+AddLayer(N,L);
 
-Layer**L2=((*L)->Next);
+Layer**L2=&((*L)->Next);
 
 L=L2;
 }
@@ -266,13 +260,13 @@ exit(-1);
 printf("\n\n Neural Network:%s",N->Name!=NULL?N->Name->Name:"NULL");
 printf("\n Error type:%d",N->ErrorType);
 
-PrintLayers((*N->Layers));
+PrintLayers(N->Layers);
 
 }
 
 //Parse all layers from file
 //use MFS, matrix file stream
-NeuralNetwork** ParseLayers(char*FileName,char Delim){
+NeuralNetwork* ParseLayers(char*FileName,char Delim){
 
 //Read NN file format:
 //Parse Name-DELIM-ErrorType-DELIM-Normalized ->Normalized 1 or 0
@@ -282,11 +276,8 @@ NeuralNetwork** ParseLayers(char*FileName,char Delim){
 
 //Layer* Layers = malloc(sizeof(Layer));
 
-N = malloc(sizeof(NeuralNetwork*));
-NeuralNetwork**NN = N;
-NN[0]=malloc(sizeof(NeuralNetwork));
-
-(*NN)->Layers=NULL;
+NeuralNetwork* NN = malloc(sizeof(NeuralNetwork));
+NN->Layers=NULL;
 
 MatrixFileStream* MFS = NewMatrixFileStream(FileName);
 if(MFS==NULL){
@@ -311,7 +302,7 @@ printf("\n Indicator:%s",str);
 if(i==0){
 
 
-(*NN)->Name = Concat(NULL,str);
+NN->Name = Concat(NULL,str);
 }
 else if(i==1){
 p=atoi(str);
@@ -320,7 +311,7 @@ if(p<0||p>1)
 printf("Bad Indicator parsed");
 exit(-2);
 }
-(*NN)->ErrorType=p;
+NN->ErrorType=p;
 }
 else if(i==2){
 p=atoi(str);
@@ -329,7 +320,7 @@ if(p<0||p>1)
 printf("Bad Indicator parsed");
 exit(-2);
 }
-(*NN)->Normalized = p==0 ? false:true;
+NN->Normalized = p==0 ? false:true;
 }
 free(str);
 str=NULL;
@@ -350,19 +341,26 @@ ReadFile(MFS,Delim);
 
 Matrix* C = MFS->M;
 
-L = NewLayer(NULL,C,0,0);
+Layer* H2 = NewLayer(NULL,C,0,0);
+Layer** Ht = &H2;
+//DeleteMatrixM(C);
 
-AddLayer(NN,L);
+DeleteLayers(H2);
 
-Prev=L;
+AddLayer(NN,Ht);
+
+Prev=&H2;
 
 //Get Activation for HIDDEN Layer n
 if(str!=NULL)
 free(str);
 str=NULL;
 
-//Ns,Ns,R,Ns,R,Ns,R,Ns,
+//DeleteLayers(H2);
 
+Layer*L2=NULL;
+//Layer* Prev = NULL;
+//Ns,Ns,R,Ns,R,Ns,R,Ns,
 while(1){
 
 str=NextString(F,Delim);
@@ -383,16 +381,17 @@ printf("\nMade it 2:%s",str);
 ReadFile(MFS,Delim);
 
 Matrix* B=MFS->M;
+//Layer* H[1];
+L2= NewLayer(Prev,B,1,atoi(str+1));
+Layer**L = &L2;
 
-L = NewLayer(Prev,B,1,atoi(str+1));
+//DeleteMatrixM(B);
 
 free(str);
 str=NULL;
 str=NextString(F,Delim);
 if(str==NULL){
-DeleteLayers(L);
-free(L);
-L=NULL;
+DeleteLayers(L2);
 break;
 }
 
@@ -403,13 +402,12 @@ ReadFile(MFS,Delim);
 Matrix* W=MFS->M;
 SetWeights(L,W);
 
+//DeleteMatrixM(W);
 free(str);
 str=NULL;
 str=NextString(F,Delim);
 if(str==NULL){
-DeleteLayers(L);
-free(L);
-L=NULL;
+DeleteLayers(L2);
 break;
 }
 
@@ -420,13 +418,12 @@ ReadFile(MFS,Delim);
 Matrix*E=MFS->M;
 SetError(L,E);
 
+//DeleteMatrixM(E);
 free(str);
 str=NULL;
 str=NextString(F,Delim);
 if(str==NULL){
-DeleteLayers(L);
-free(L);
-L=NULL;
+DeleteLayers(L2);
 break;
 }
 
@@ -437,23 +434,31 @@ ReadFile(MFS,Delim);
 Matrix*GW=MFS->M;
 SetGradientWeights(L,GW);
 
+//DeleteMatrixM(GW);
+
 Prev=L;
 
 AddLayer(NN,L);
 
-i+=1;
+//DeleteLayers(*L);
 
+i+=1;
 if(str!=NULL)
 free(str);
 str=NULL;
-
+DeleteLayers(L2);
 }
+//}while(str[0]!='\0');
 
 CloseMFS(MFS);
 
-return NN;
-}
+//DeleteLayers(L2);
 
+//DeleteNetwork(NN);
+
+return NN;
+
+}
 int ParseInt(){
 
 char *end;
@@ -511,18 +516,15 @@ return n;
 
 }
 
-void DeleteNetwork(NeuralNetwork**N){
+void DeleteNetwork(NeuralNetwork*N){
 if(N==NULL){
 printf("\n Delete Network NULL network");
 exit(-1);
 }
 
-DeleteLayers(((*N)->Layers));
+DeleteLayers(N->Layers);
 
-DeleteString((*N)->Name);
-
-free((*N));
-*N=NULL;
+DeleteString(N->Name);
 
 free(N);
 N=NULL;
