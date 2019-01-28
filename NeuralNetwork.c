@@ -399,6 +399,14 @@ printf("\n Input rows:%lu does not match activation rows:%lu",Input->Rows,(*((*N
 exit(-2);
 }
 
+size_t ii = 0;
+
+for(ii=0;ii<Input->Rows;ii+=1){
+
+(*((*NN)->Layers))->Activation->Entries[ii][0] = Input->Entries[ii][0];
+
+}
+
 Layer** L =NULL; 
 Layer** L2=NULL;
 
@@ -453,6 +461,7 @@ printf("%LF\n",Error->Entries[i][0]);
 
 }
 long double e = 0.000;
+
 for(i=0; i<Error->Rows;i+=1){
 e = Error->Entries[i][0] <0? Error->Entries[i][0]*-1:Error->Entries[i][0];
 if(!(e<0.0001)){
@@ -460,6 +469,7 @@ printf("\n Still error for entry: %lu",i+1);
 NoError=false;
 }
 }
+
 if(NoError){
 return 1;
 }
