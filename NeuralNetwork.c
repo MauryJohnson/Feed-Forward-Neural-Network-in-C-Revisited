@@ -132,6 +132,8 @@ MFS = NewMatrixFileStream(argv[idx]);
 
 while(ReadFile(MFS,Delim)!=NULL){
 
+FeedForward(N,MFS->M);
+
 DeleteMatrixM(MFS->M);
 
 }
@@ -298,8 +300,15 @@ printf("\n SIZE:%d",size);
 Matrix* Weights = NULL;
 Weights = CreateMR(CreateE(Rows,Columns),Rows,Columns,"Weights");
 
+Matrix* GradientWeights = NULL;
+GradientWeights = CreateMR(CreateE(Rows,Columns),Rows,Columns,"GradientWeights");
+
+Matrix* Error = NULL;
+
 Matrix* ActivationM=  NULL;
 ActivationM = CreateMR(CreateE(Rows,(*Prev)->Activation->Columns),Rows,(*Prev)->Activation->Columns,"Activation");
+
+Error = CreateMR(CreateE(Rows,(*Prev)->Activation->Columns),Rows,(*Prev)->Activation->Columns,"Error");
 
 RandomizeM(Weights);
 
@@ -308,6 +317,10 @@ Layer** H = NULL;
 H = NewLayer(Prev,Weights,1,Activation);
 
 (*H)->Activation = ActivationM;
+
+(*H)->GradientWeights=GradientWeights;
+
+(*H)->Error =Error;
 
 AddLayer(N,H);
 
@@ -327,6 +340,7 @@ Prev=H;
 
 }
 
+
 else{
 //Iterate all layers parsed from file and just store them into new NN
 Layer* L2 = AL;
@@ -341,7 +355,47 @@ L=L2;
 
 }
 
+
 return N;
+}
+
+
+int FeedForward(NeuralNetwork** NN, Matrix* Input){
+
+if(NN==NULL){
+printf("\n Neural Network does not exist");
+exit(-2);
+}
+
+if(Input==NULL){
+printf("\n Input does not exist");
+exit(-2);
+}
+
+if(Input->Rows!=(*((*NN)->Layers))->Activation->Rows-1){
+printf("\n Input rows:%lu does not match activation rows:%lu",Input->Rows,(*((*NN)->Layers))->Activation->Rows-1);
+exit(-2);
+}
+
+Layer** L =NULL; 
+Layer** L2=NULL;
+
+for(L = (*((*NN)->Layers))->Next; L!=NULL; L2=((*L)->Next),L=L2){
+
+if((*L)->Activation!=NULL)
+DeleteMatrixM((*L)->Activation);
+
+(*L)->Activation = MultiplyMR((*L)->Weights,(*(*L)->Prev)->Activation,"WXA");
+
+Activate(*L);
+
+}
+
+printf("\n Finished Feeding Forward:\n");
+
+PrintLayers((*(*NN)->Layers));
+
+return 0;
 }
 
 void PrintNetwork(NeuralNetwork*N){
@@ -453,10 +507,13 @@ str=NULL;
 
 char str2[10];
 
+Layer** L2 = NULL;
+
 while(1){
 
 str=NextString(F,Delim);
 if(str==NULL){
+printf("\n Break 1");
 break;
 }
 printf("\nMade it 1");
@@ -465,6 +522,7 @@ free(str);
 str=NULL;
 str=NextString(F,Delim);
 if(str==NULL){
+printf("\n Break 2");
 break;
 }
 
@@ -490,9 +548,12 @@ ReadFile(MFS,Delim);
 
 Matrix* B=MFS->M;
 
-L = NewLayer(Prev,B,1,atoi(str2));
+//L
+//Layer** L2 = NULL;
 
-SetActivation(L,B);
+L2 = NewLayer(Prev,B,1,atoi(str2));
+
+SetActivation(L2,B);
 
 free(str);
 str=NULL;
@@ -501,6 +562,7 @@ if(str==NULL){
 //DeleteLayers(L);
 //free(L);
 //L=NULL;
+printf("\n Break 3");
 break;
 }
 
@@ -509,7 +571,7 @@ printf("\nMade it 3:%s",str);
 ReadFile(MFS,Delim);
 
 Matrix* W=MFS->M;
-SetWeights(L,W);
+SetWeights(L2,W);
 
 free(str);
 str=NULL;
@@ -518,6 +580,9 @@ if(str==NULL){
 //DeleteLayers(L);
 //free(L);
 //L=NULL;
+//printf("\n Break 1");
+//
+printf("\n Break 4");
 break;
 }
 
@@ -526,7 +591,7 @@ printf("\nMade it 4:%s",str);
 ReadFile(MFS,Delim);
 
 Matrix*E=MFS->M;
-SetError(L,E);
+SetError(L2,E);
 
 free(str);
 str=NULL;
@@ -534,7 +599,8 @@ str=NextString(F,Delim);
 if(str==NULL){
 //DeleteLayers(L);
 //free(L);
-//L=NULL;
+//L=NULL
+printf("\n Break 5");
 break;
 }
 
@@ -543,11 +609,11 @@ printf("\nMade it 5:%s",str);
 ReadFile(MFS,Delim);
 
 Matrix*GW=MFS->M;
-SetGradientWeights(L,GW);
+SetGradientWeights(L2,GW);
 
-Prev=L;
+Prev=L2;
 
-AddLayer(NN,L);
+AddLayer(NN,L2);
 
 i+=1;
 

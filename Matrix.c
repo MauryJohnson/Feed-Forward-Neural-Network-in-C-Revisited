@@ -1424,6 +1424,14 @@ Columns+=1;
 Rows+=1;
 printf("\n SIZE:%lu  ROWS:%lu COLUMNS:%lu\n",Size,Rows,COLUMNS);
 if(COLUMNS==0){
+long long int t=0;
+while(t<Rows){
+free(Entries[t]);
+Entries[t]=NULL;
+t+=1;
+}
+free(Entries);
+Entries=NULL;
 return NULL;
 }
 
