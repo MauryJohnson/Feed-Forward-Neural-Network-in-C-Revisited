@@ -38,6 +38,9 @@ NeuralNetwork** CreateNeuralNetwork(Layer* AllLayers);
 //Return status
 int FeedForward(NeuralNetwork** NN, Matrix* Input);
 
+//Assess the error and then propogate that error back
+int BackPropagate(NeuralNetwork** NN, Matrix*Error);
+
 //Delete NN
 void DeleteNetwork(NeuralNetwork**N);
 
@@ -132,9 +135,23 @@ MFS = NewMatrixFileStream(argv[idx]);
 
 while(ReadFile(MFS,Delim)!=NULL){
 
+//Feed
 FeedForward(N,MFS->M);
 
 DeleteMatrixM(MFS->M);
+if(ReadFile(MFS,Delim)!=NULL){
+
+//Back Propagate error
+
+BackPropagate(N,CopyMatrixMR(MFS->M,"Error Copied"));
+
+DeleteMatrixM(MFS->M);
+
+}
+else{
+printf("\n Network BackPropogate couldn't read more info");
+break;
+}
 
 }
 
@@ -399,6 +416,69 @@ Activate(*L);
 printf("\n Finished Feeding Forward:\n");
 
 PrintLayers((*(*NN)->Layers));
+
+return 0;
+}
+
+int BackPropagate(NeuralNetwork** NN, Matrix*Error){
+if(NN==NULL){
+printf("\n No NN to back propoget");
+exit(-2);
+}
+if(Error==NULL){
+printf("\n No Error given");
+exit(-2);
+}
+
+Layer** L = (*NN)->Layers;
+while((*L)->Next!=NULL){
+Layer** L2 = ((*L)->Next);
+L=L2;
+}
+
+bool NoError=true;
+
+if((*L)->Activation->Rows!=Error->Rows){
+printf("\n Backpropogation error rows don't match activation rows");
+exit(-2);
+}
+
+size_t i=0;
+for(i=0;i<Error->Rows;i+=1){
+printf("\n Entering expected output:%LF - %LF ==",Error->Entries[i][0],(*L)->Activation->Entries[i][0]);
+
+Error->Entries[i][0] = Error->Entries[i][0] - (*L)->Activation->Entries[i][0];
+
+printf("%LF\n",Error->Entries[i][0]);
+
+}
+long double e = 0.000;
+for(i=0; i<Error->Rows;i+=1){
+e = Error->Entries[i][0] <0? Error->Entries[i][0]*-1:Error->Entries[i][0];
+if(!(e<0.0001)){
+printf("\n Still error for entry: %lu",i+1);
+NoError=false;
+}
+}
+if(NoError){
+return 1;
+}
+
+(*L)->Error = Error;
+Layer** L2 = NULL;
+
+for(L=L;(*(*L)->Prev)->Prev!=NULL;L2 = (*L)->Prev,L=L2){
+
+Matrix* WeightsTransposed = TransposeMR((*L)->Weights,"WT");
+
+Matrix* WTXE = MultiplyMR(WeightsTransposed,(*L)->Activation,"WTXE");
+
+(*(*L)->Prev)->Error = WTXE;
+
+}
+
+
+
 
 return 0;
 }
