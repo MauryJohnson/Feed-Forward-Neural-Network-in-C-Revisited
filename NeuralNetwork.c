@@ -41,6 +41,9 @@ int FeedForward(NeuralNetwork** NN, Matrix* Input);
 //Assess the error and then propogate that error back
 int BackPropagate(NeuralNetwork** NN, Matrix*Error);
 
+//Computer gradient descent given error type and error values
+int Gradient(NeuralNetwork**NN,long double lr);
+
 //Delete NN
 void DeleteNetwork(NeuralNetwork**N);
 
@@ -133,28 +136,51 @@ MFS = NewMatrixFileStream(argv[idx]);
 
 //Train neural network using Matrix File Stream
 
+int err = -1;
+
+long double lr;
+
+printf("\nEnter Learning Rate:");
+
+scanf("%LF",&lr);
+
+
+if(lr>0){
+
 while(ReadFile(MFS,Delim)!=NULL){
 
 //Feed
-FeedForward(N,MFS->M);
+err = FeedForward(N,MFS->M);
 
 DeleteMatrixM(MFS->M);
+
 if(ReadFile(MFS,Delim)!=NULL){
 
 //Back Propagate error
 
-BackPropagate(N,CopyMatrixMR(MFS->M,"Error Copied"));
+err = BackPropagate(N,CopyMatrixMR(MFS->M,"Error Copied"));
 
 DeleteMatrixM(MFS->M);
 
 }
+
 else{
 printf("\n Network BackPropogate couldn't read more info");
 break;
 }
 
+if(err!=1){
+
+Gradient(N,lr);
+
 }
 
+}
+
+}
+else{
+printf("\n Learning rate must be greater than 0!");
+}
 
 
 
@@ -471,6 +497,7 @@ NoError=false;
 }
 
 if(NoError){
+printf("\n No error found");
 return 1;
 }
 
@@ -487,6 +514,42 @@ Matrix* WTXE = MultiplyMR(WeightsTransposed,(*L)->Activation,"WTXE");
 
 }
 
+return 0;
+}
+
+
+int Gradient(NeuralNetwork**NN, long double Lr){
+if(NN==NULL){
+printf("\n No neural network to perform gradient descent");
+exit(-3);
+}
+
+Layer**L = (*((*NN)->Layers))->Next;
+Layer** L2 = NULL;
+
+for(L = (*((*NN)->Layers))->Next;L!=NULL;L2=(*L)->Next,L=L2){
+
+Matrix* GradientWeight = NULL;
+Matrix* ActivationTranspose = NULL;
+
+switch((*L)->ActivationFunction){
+
+case 0:
+    printf("\n Using no Derivative, Randomizing Weights");
+    ActivationTranspose = TransposeMR((*L)->Activation,"Activation Transpose");
+    
+    RandomizeM((*L)->Activation);
+
+    MultiplyAcrossM((*L)->Activation,(*L)->Error,"AXE"); 
+
+    //MultiplyAcrossV((*L)->Activation,Lr);
+case 1:
+    printf("\n Using Derivative of Sigmoid");
+
+}
+
+
+}
 
 
 

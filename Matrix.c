@@ -97,6 +97,16 @@ void RREFM(Matrix* A, char*N);
 void MultiplyM(Matrix* A, Matrix* B,char*N);
 //Multiply two matrices, return new matrix C
 Matrix * MultiplyMR(Matrix* A, Matrix* B,char*N);
+
+//Multiply across two matrices affecting first matrix
+void MultiplyAcrossM(Matrix* A, Matrix*B, char* N);
+
+//Multiply Across matrix with value
+void MultiplyAcrossV(Matrix*A,long double Lr);
+
+//Multiply across two matrices  and return new matrix
+Matrix* MultiplyAcrossMR(Matrix*A, Matrix* B, char* N);
+
 //Get sum of norm values, return norm matrix, which are all from Matrix A...
 Matrix * NormalizeValuesMR(Matrix*A);
 //Normalize Matrix given its normalize values
@@ -811,6 +821,75 @@ C->Name=Name;
 C->Entries=Entries;
 C->Rows=A->Rows;
 C->Columns=B->Columns;
+
+return C;
+}
+
+
+void MultiplyAcrossM(Matrix* A, Matrix*B, char* N){
+if(A==NULL || B ==NULL){
+printf("\n MultiplyAcross NULL Matrix");
+exit(-2);
+}
+
+if(A->Rows!=B->Rows || A->Columns!=B->Columns){
+printf("\n MultiplyAcrossM rows and columns don't match!");
+exit(-1);
+}
+
+size_t i=0; 
+size_t j=0;
+for(i=0;i<A->Rows;i+=1){
+for(j=0;j<A->Columns; j+=1){
+A->Entries[i][j] = A->Entries[i][j] * B->Entries[i][j];
+}
+}
+A->Name = N;
+}
+
+
+void MultiplyAcrossV(Matrix*A,long double Lr){
+if(A==NULL){
+printf("\n MultiplyAcross NULL Matrix");
+exit(-2);
+}
+
+size_t i=0;
+size_t j=0;
+
+for(i=0;i<A->Rows;i+=1){
+
+for(j=0;j<A->Columns;j+=1){
+A->Entries[i][j]*=Lr;
+}
+
+}
+
+}
+
+Matrix* MultiplyAcrossMR(Matrix* A, Matrix*B, char* N){
+if(A==NULL || B ==NULL){
+printf("\n MultiplyAcross NULL Matrix");
+exit(-2);
+}
+
+if(A->Rows!=B->Rows || A->Columns!=B->Columns){
+printf("\n MultiplyAcrossM rows and columns don't match!");
+exit(-1);
+}
+
+size_t i=0;
+size_t j=0;
+
+Matrix * C = CopyMatrixMR(A,"A Copied");
+
+for(i=0;i<A->Rows;i+=1){
+for(j=0;j<A->Columns; j+=1){
+C->Entries[i][j] = A->Entries[i][j] * B->Entries[i][j];
+}
+}
+
+C->Name = N;
 
 return C;
 }
