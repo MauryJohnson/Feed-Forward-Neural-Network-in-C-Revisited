@@ -34,11 +34,15 @@ void PrintNetwork(NeuralNetwork*N);
 //Create Neural Network, given a network from past or not
 NeuralNetwork** CreateNeuralNetwork(Layer* AllLayers);
 
+//Feed Data Forward into network
+//Return status
+int FeedForward(NeuralNetwork** NN, Matrix* Input);
+
 //Delete NN
 void DeleteNetwork(NeuralNetwork**N);
 
 //Save NN
-void SaveNetwork(NeuralNetwork**N,char Delim);
+void SaveNetwork(NeuralNetwork**N,char D);
 
 //Given filename, parse all layers for neural network
 NeuralNetwork** ParseLayers(char* FileName,char Delim);
@@ -46,37 +50,100 @@ NeuralNetwork** ParseLayers(char* FileName,char Delim);
 //Parse integer from user input
 int ParseInt();
 
+//Parse String followed by a breaking character
+char* ParseString();
+
 //Parse double from user input
 long double ParseDouble();
 
-Layer** L;
-NeuralNetwork**N;
+//Clear Stdin buffer
+void ClearBuffer();
 
+//Points to a pointer of a layer
+//Layer** L;
+
+//Points to a pointer to a neural network
+//NeuralNetwork**N;
 
 //ARGV[1] CAN BE ARGUMENT FOR FILE
 //ARGV[2] CAN BE ARGUMENT FOR DELIMITER
 int main(int argc, char**argv){
 Layer* AL;
+char Delim = '+';
 
-//NeuralNetwork**N=NULL;
+NeuralNetwork**N = NULL;
 
-if(argc>2){
+//Use Existing Neural Network or Create one
+if(argc>3 && (argc>3? strlen(argv[0])!=0:false)){
 
-//DeleteNetwork(ParseLayers(argv[1],argv[2][0]));
-N = (ParseLayers(argv[1],argv[2][0]));
+N = (ParseLayers(argv[1],argv[3][0]));
 
-//PrintNetwork(N);
-//DeleteNetwork(N);
 }
 else{
-N= CreateNeuralNetwork(NULL);
+
+Delim = (argc>2? (strlen(argv[2])>0?argv[2][0]:'+'):'+');
+N = CreateNeuralNetwork(NULL);
+
 }
-//free(N->Name);
-//DeleteString(N->Name);
-//free(N);
+//printf("\n Enter training data file:");
+
+//SaveNetwork(N,Delim);
+
+//Used to parse matrices from file
+MatrixFileStream* MFS;
+
+//Check if created new matrix or used existing
+if(argc>3){
+//int idx2 = argc-2;
+/*
+if(argc!=4){
+printf("\n Delimiter UNDEFINED!");
+idx2 = argc-1;
+}
+*/
+//else{
+Delim = argv[argc-1][0];
+//}
+MFS = NewMatrixFileStream(argv[argc-2]);
+}
+else{
+int idx = -1;
+if(argc<3){
+if(argc<2){
+printf("\n Training Data UNDEFINED!\n");
+}
+printf("\n Delimiter UNDEFINED!\n");
+idx = 1;
+}
+else{
+idx = 1;
+Delim = argv[argc-1][0];
+}
+
+//printf("Enter training data file/folder:");
+//char FIN[255];
+//scanf("%s",FI);
+
+if(idx!=-1)
+MFS = NewMatrixFileStream(argv[idx]);
+}
+
+//Train neural network using Matrix File Stream
+
+while(ReadFile(MFS,Delim)!=NULL){
+
+DeleteMatrixM(MFS->M);
+
+}
 
 
-SaveNetwork(N,'_');
+
+
+
+
+
+SaveNetwork(N,Delim);
+
 /*
 
 
@@ -85,9 +152,9 @@ SaveNetwork(N,'_');
 
 
 
-
-
 */
+
+CloseMFS(MFS);
 PrintNetwork(*N);
 DeleteNetwork(N);
 //
@@ -130,18 +197,23 @@ L=L2;
 
 NeuralNetwork** CreateNeuralNetwork(Layer* AL){
 int Layers = -1;
-int LayerSize=-1;
-int Rows=-1;
-int Columns=-1;
+size_t LayerSize=-1;
+size_t Rows=-1;
+size_t Columns=-1;
 int Activation=-1;
 //int ActivationFunction=-1;
 
 unsigned long int i=0;
 unsigned long int j=0;
 
-NeuralNetwork** N = malloc(sizeof(NeuralNetwork*));
+NeuralNetwork** N = NULL;
+N = malloc(sizeof(NeuralNetwork*));
 
-*N=malloc(sizeof(NeuralNetwork));
+N[0] = NULL;
+NeuralNetwork* N2 = NULL;
+N2 = malloc(sizeof(NeuralNetwork));
+N[0]=N2;
+N[0]->Layers = NULL;
 
 Layer** Prev;
 
@@ -171,16 +243,20 @@ printf("\n Normalized? Enter >0 Yes <=0 No:");
 for(i=0;i<Layers;i+=1){
 if(i==0){
 printf("\nEnter Input Layer Size:");
-LayerSize = ParseInt();
+
+LayerSize = ((size_t)ParseInt())+1;
+
 if(LayerSize<1){
 printf("\n Invalid Layer Size");
 exit(-1);
 }
 
-Matrix* IN = CreateMR(
-CreateE(LayerSize,1),LayerSize,1,"Input");
+Matrix* IN = NULL;
 
-Layer** IL = NewLayer(NULL,IN,0,0);
+IN = CreateMR(CreateE(LayerSize,1),LayerSize,1,"Input");
+
+Layer**IL = NULL;
+IL = NewLayer(NULL,IN,0,0);
 
 (*N)->Layers=IL;
 
@@ -196,13 +272,13 @@ printf("\n Enter Hidden Layer Size:");
 else{
 printf("\nEnter Output Layer Size:");
 }
-LayerSize = ParseInt();
+LayerSize = ParseInt() + (i==Layers-1? 0:1);
 if(LayerSize<1){
 printf("\n Invalid Layer Size");
 exit(-1);
 }
 
-printf("\nEnter Activation Function type:");
+printf("\nEnter Activation Function type 0 none 1 Sigmoid 2 Relu 3 SoftMax:");
 
 Activation = ParseInt();
 
@@ -212,45 +288,38 @@ exit(-1);
 }
 
 Rows=LayerSize;
-Columns=(i==1? (*Prev)->Activation->Rows:(*Prev)->Weights->Rows);
+Columns=(size_t)(*Prev)->Activation->Rows;
 
 int numsize = ceil(log10(i*1.0));
 int size = i==1?(numsize+8):(numsize+7);
 
 printf("\n SIZE:%d",size);
 
-/*
-char* num = malloc(size*sizeof(char));
+Matrix* Weights = NULL;
+Weights = CreateMR(CreateE(Rows,Columns),Rows,Columns,"Weights");
 
-num[0]='W';
-num[1]='e';
-num[2]='i';
-num[3]='g';
-num[4]='h';
-num[5]='t';
-if(numsize==0){
-num[6]=1;
-numsize=1;
-}
-num[size-1]='\0';
-
-snprintf(num+6,numsize,"%lld",i);
-
-printf("\n%s",num);
-*/
-
-Matrix* Weights = CreateMR(CreateE(Rows,Columns+1),Rows,Columns+1,"");
+Matrix* ActivationM=  NULL;
+ActivationM = CreateMR(CreateE(Rows,(*Prev)->Activation->Columns),Rows,(*Prev)->Activation->Columns,"Activation");
 
 RandomizeM(Weights);
 
-Layer** H = NewLayer(Prev,Weights,1,Activation);
-//Layer**H=&H2;
+Layer** H = NULL;
+
+H = NewLayer(Prev,Weights,1,Activation);
+
+(*H)->Activation = ActivationM;
 
 AddLayer(N,H);
+
+//(*Prev)->Next = H;
+
+//(*Prev)->Next = H;
 
 //PrintLayer(H);
 
 Prev=H;
+
+//DeleteLayers(H);
 
 }
 
@@ -299,7 +368,7 @@ NeuralNetwork** ParseLayers(char*FileName,char Delim){
 
 //Layer* Layers = malloc(sizeof(Layer));
 
-N = malloc(sizeof(NeuralNetwork*));
+NeuralNetwork** N = malloc(sizeof(NeuralNetwork*));
 NeuralNetwork**NN = N;
 NN[0]=malloc(sizeof(NeuralNetwork));
 
@@ -367,7 +436,7 @@ ReadFile(MFS,Delim);
 
 Matrix* C = MFS->M;
 
-L = NewLayer(NULL,C,0,0);
+Layer ** L = NewLayer(NULL,C,0,0);
 
 AddLayer(NN,L);
 
@@ -379,6 +448,10 @@ free(str);
 str=NULL;
 
 //Ns,Ns,R,Ns,R,Ns,R,Ns,
+
+//int Activation;
+
+char str2[10];
 
 while(1){
 
@@ -397,11 +470,27 @@ break;
 
 printf("\nMade it 2:%s",str);
 
+bzero(str2,10);
+int h=1;
+int sz = 0;
+for(h=0;h<9 && h<strlen(str);h+=1){
+if(isdigit(str[h])){
+printf("\n IS DIGIT \n");
+str2[sz]=str[h];
+sz+=1;
+}
+}
+//snprintf(str2,9,"%s",str);
+
+//Activation = atoi(str2);
+
+printf("\n Activation:%s",str2);
+
 ReadFile(MFS,Delim);
 
 Matrix* B=MFS->M;
 
-L = NewLayer(Prev,B,1,atoi(str+1));
+L = NewLayer(Prev,B,1,atoi(str2));
 
 SetActivation(L,B);
 
@@ -473,6 +562,36 @@ CloseMFS(MFS);
 return NN;
 }
 
+
+char* ParseString(){
+char* end;
+char buf[4086];
+//int n;
+
+do {
+     if (!fgets(buf, sizeof buf, stdin))
+        break;
+     // remove \n
+         buf[strlen(buf) - 1] = 0;
+              //
+                 strtol(buf, &end, 4096);
+     
+                  /*  if(n<0){
+                            printf("\n Error strtol");
+                                    exit(-1);
+                                       }
+     */
+                                       } while (end != buf + strlen(buf));
+     
+
+
+//void ClearBuffer();
+                                       //printf("\n%d Entered",n);
+  	ClearBuffer();   
+                                       return end;
+
+}
+
 int ParseInt(){
 
 char *end;
@@ -524,6 +643,8 @@ do {
 
 scanf("%Lf",&n);
 
+ClearBuffer();
+
 printf("\n%Lf Entered",n);
 
 return n;
@@ -531,11 +652,38 @@ return n;
 }
 
 
+void ClearBuffer(){
+
+while(getchar()!='\n');
+
+}
+
 void SaveNetwork(NeuralNetwork**N,char Delim){
 if(N==NULL){
 printf("\n No NN to Save");
 return;
 }
+
+//char Delim = '+';
+
+/*
+printf("\n Enter Delimiter:");
+char Delims[10];
+fscanf(stdin,"%c",Delims);
+Delim = Delims[0];
+*/
+//char Delims[10];
+//scanf("%s",Delims);
+
+/*
+if(strlen(Delims)>1){
+printf("\n Error parsing delimiter");
+exit(-1);
+}
+if(strlen(Delims)>0)
+Delim = Delims[0];
+*/
+
 bool Quit = false;
 bool Write = false;
 long long int i=0;
@@ -743,7 +891,7 @@ fprintf(F,"%c",'\n');
 fprintf(F,"%s",Act);
 
 fprintf(F,"%c",Delim);
-//fprintf(F,"%c",'\n');
+fprintf(F,"%c",'\n');
 
 SaveMatrix((*L)->Error,F);
 bzero(Act,12);
@@ -772,7 +920,7 @@ i+=1;
 
 }
 
-
+fclose(F);
 
 //free(Act);
 //Act=NULL;
@@ -793,10 +941,15 @@ DeleteLayers(((*N)->Layers));
 
 DeleteString((*N)->Name);
 
-free((*N));
-*N=NULL;
+NeuralNetwork* N2 = (N[0]);
+//free((*N));
+//*N=NULL;
 
 free(N);
 N=NULL;
+
+free(N2);
+N2=NULL;
+
 
 }

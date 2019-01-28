@@ -114,7 +114,7 @@ void AddRowM(Matrix* M, unsigned long int Column,unsigned long int Column2, long
 long double** CreateE(/*long double**e,*/size_t Rows,size_t Columns);
 //Create Matrix given double[][] 2d array, obviously return this
 //new matrix
-Matrix* CreateMR(long double** e,int Rows,int Columns,char*N);
+Matrix* CreateMR(long double** e,size_t Rows,size_t Columns,char*N);
 //Delete all matrices
 void DeleteMatrixM(Matrix * M);
 //Delete all doubles
@@ -206,6 +206,25 @@ CloseMFS(MFS1);
 
 CloseMFS(MFS2);
 
+MFS1 = NewMatrixFileStream("M1T1");
+
+ReadFile(MFS1,'_');
+
+DeleteMatrixM(MFS1->M);
+
+ReadFile(MFS1,'_');
+
+DeleteMatrixM(MFS1->M);
+
+ReadFile(MFS1,'_');
+
+DeleteMatrixM(MFS1->M);
+
+ReadFile(MFS1,'_');
+
+DeleteMatrixM(MFS1->M);
+
+
 return 0;
 
 ReadFile(MFS2,'_');
@@ -254,6 +273,7 @@ DeleteMatrixM(M1);
 DeleteMatrixM(M2);
 
 return 0;
+
 }
 */
 
@@ -866,11 +886,14 @@ if(/*e==NULL || */Rows<=0 || Columns<=0){
 printf("\nNo entries");
 exit(-1);
 }
+
 long double** Entries = malloc(Rows*sizeof(long double*));
+
 if(Entries==NULL){
 printf("\n Error Creating Entires CreateE");
 exit(-1);
 }
+
 unsigned long int i=0;
 unsigned long int j=0;
 for(i=0;i<Rows;i+=1){
@@ -890,7 +913,7 @@ return Entries;
 
 ////Create Matrix given double[][] 2d array, obviously return this
 ////new matrix
-Matrix* CreateMR(long double** E,int Rows,int Columns,char*Name){
+Matrix* CreateMR(long double** E,size_t Rows,size_t Columns,char*Name){
 if(E==NULL){
 printf("\nCreateMR NULL Entries");
 exit(0);
@@ -1400,6 +1423,10 @@ Columns+=1;
 //
 Rows+=1;
 printf("\n SIZE:%lu  ROWS:%lu COLUMNS:%lu\n",Size,Rows,COLUMNS);
+if(COLUMNS==0){
+return NULL;
+}
+
 //free(Entries[Rows]);
 //
 //
@@ -1519,6 +1546,7 @@ MFS=NULL;
 }
 
 MatrixFileStream* NewMatrixFileStream(char* Name){
+printf("\nStream File:%s\n",Name);
 FILE* F = fopen(Name,"r");
 if(F==NULL){
 printf("\n File Cannot open");

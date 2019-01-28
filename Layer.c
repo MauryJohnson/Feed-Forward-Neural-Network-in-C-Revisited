@@ -175,16 +175,16 @@ exit(-4);
 
 switch(Type){
 case 0:
-	(*L)->Activation = M;
-	(*L)->Type='I';
+	(L[0])->Activation = M;
+	(L[0])->Type='I';
 	break;
 case 1:
-	(*L)->Weights=M;
-	(*L)->Type = 'H';
+	(L[0])->Weights=M;
+	(L[0])->Type = 'H';
 	break;
 case 2:
-	(*L)->Activation=M;
-	(*L)->Type = 'O';
+	(L[0])->Activation=M;
+	(L[0])->Type = 'O';
 	break;
 default:
 	printf("\n Error! Invalid Entries for New Layer!");
@@ -199,7 +199,7 @@ exit(-3);
 (*L)->ActivationFunction=ActivationType;
 
 //Previous layer created
-(*L)->Prev = Prev==NULL? NULL:Prev;
+(*L)->Prev = Prev;
 
 //Brand ney layer
 (*L)->Next = NULL;
@@ -217,12 +217,17 @@ return;
 }
 
 Layer**P=(*L)->Prev;
+Layer** P2;
 Layer**N=(*L)->Next;
+Layer** N2;
 Matrix* M = NULL;
 while(P!=NULL && N!=NULL){
 if(P!=NULL){
 
 printf("\n Deleting:");
+
+if(*P!=NULL){
+
 PrintLayer(*P);
 
 //M=P->Activation;
@@ -241,18 +246,24 @@ DeleteMatrixM((*P)->Error);
 if((*P)->GradientWeights!=NULL)
 DeleteMatrixM((*P)->GradientWeights);
 
-Layer** P2=(*P)->Prev;
+P2=(*P)->Prev;
 
 free(*P);
 *P=NULL;
+}
+
 free(P);
 P=NULL;
+
 P=P2;
 }
 
 if(N!=NULL){
 
 printf("\n\n Deleting:\n\n");
+
+if(*N!=NULL){
+
 PrintLayer(*N);
 
 //M=N->Activation;
@@ -271,18 +282,24 @@ DeleteMatrixM((*N)->Error);
 if((*N)->GradientWeights!=NULL)
 DeleteMatrixM((*N)->GradientWeights);
 
-Layer** N2 = (*N)->Next;
+N2 = (*N)->Next;
 //free(&N);
 free(*N);
 *N=NULL;
+}
+
 free(N);
 N=NULL;
+
 N=N2;
 }
 
 }
 
+if(L!=NULL){
+
 if((*L)!=NULL){
+
 //M=L->Activation;
 if((*L)->Activation!=NULL)
 DeleteMatrixM((*L)->Activation);
@@ -301,6 +318,8 @@ DeleteMatrixM((*L)->GradientWeights);
 
 free((*L));
 (*L)=NULL;
+
+}
 
 free(L);
 L=NULL;
@@ -326,9 +345,13 @@ printf("Layer is NULL! FAILURE TO SET");
 exit(-4);
 }
 
+/*
 if((*L)->Weights!=NULL)
 DeleteMatrixM((*L)->Weights);
+*/
+
 (*L)->Weights=W;
+
 }
 
 Matrix* GetWeights(Layer*L){
