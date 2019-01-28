@@ -257,6 +257,8 @@ Matrix* IN = NULL;
 
 IN = CreateMR(CreateE(LayerSize,1),LayerSize,1,"Input");
 
+IN->Entries[LayerSize-1][0] = 1.0;
+
 Layer**IL = NULL;
 IL = NewLayer(NULL,IN,0,0);
 
@@ -307,6 +309,9 @@ Matrix* Error = NULL;
 
 Matrix* ActivationM=  NULL;
 ActivationM = CreateMR(CreateE(Rows,(*Prev)->Activation->Columns),Rows,(*Prev)->Activation->Columns,"Activation");
+
+if(i!=Layers-1)
+ActivationM->Entries[Rows-1][0] = 1.0;
 
 Error = CreateMR(CreateE(Rows,(*Prev)->Activation->Columns),Rows,(*Prev)->Activation->Columns,"Error");
 

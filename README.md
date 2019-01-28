@@ -1,9 +1,8 @@
 ./NN Model1 _
 
-if entering two arguments
-first argument is model to open, second argument is delimiter
+if entering three arguments
+first argument is model to open,second argument is training file,third argument is delimiter
 
-if entering one argument, creating a new network
-first argument is delimiter
+if entering two arguments, creating a new network
+first argument is training file, second argument is delimiter
 
-last argument will be training file/folder for created or existing model
