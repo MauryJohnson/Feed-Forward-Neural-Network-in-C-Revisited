@@ -31,7 +31,11 @@ typedef struct Data_{
 
 long double Entry;
 
+struct Data_* Next;
+
 }Data;
+
+void PrintEntries(Data **D,size_t Len);
 
 typedef struct Matrix__{
 //The name of the matrix, useful
@@ -65,6 +69,8 @@ void CloseMFS(MatrixFileStream* MFS);
 MatrixFileStream* NewMatrixFileStream(char* Name);
 /////////////////////////////////////////////////////////////////////////////////////
 
+
+Matrix* MNew = NULL;
 
 //Matrix OPERATIONS!!!
 /////////////////////////////////////////////////////////////////////////////////////
@@ -111,6 +117,12 @@ Matrix* MultiplyAcrossMR(Matrix*A, Matrix* B, char* N);
 Matrix * NormalizeValuesMR(Matrix*A);
 //Normalize Matrix given its normalize values
 void NormalizeM(Matrix* A, Matrix*Norms,bool Transposed);
+
+//Remove bias from matrix
+Matrix* NoBiasMR(Matrix*A);
+
+//Append Bias to existing entries
+Matrix* AppendBiasM(Matrix*A);
 
 //Multiply Row by value
 void MultiplyRowM(Matrix* M,unsigned long int Row, long double Value);
@@ -165,12 +177,20 @@ void WriteFile(FILE* F,Matrix* M);
 
 size_t GetColumns(FILE* F);
 
+size_t GetRows(FILE* F,char Delim);
+
 typedef struct RetCase_{
 
 long double First;
 long double Second;
 
 }Ret;
+
+
+Data * AllEntries = NULL;
+void AddEntry(Data** E, long double d);
+void DeleteAllEntries(Data** E,size_t Len);
+
 
 Ret* NextDouble(FILE* F,char D);
 //////////////////////////////////////////////////////////////////////////////////
@@ -300,11 +320,11 @@ exit(-1);
 //return;
 }
 
-unsigned long int i=0;
-unsigned long int j=0;
+size_t i=0;
+size_t j=0;
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<B->Columns;j+=1){
-A->Entries[i][j]+=Mult*B->Entries[i][j];
+A->Entries[i][j]+= Mult * (B->Entries[i][j]);
 }
 }
 
@@ -450,15 +470,31 @@ printf("\nNULL Matrix to TransposeMR");
 exit(0);
 }
 
-long double** Entries = malloc(A->Columns*sizeof(long double*));
+//long double** Entries = malloc(A->Columns*sizeof(long double*));
+long double** Entries = CreateE(A->Columns,A->Rows);
+if(Entries==NULL){
+printf("\n BAD ENTRIES TRANSPOSE 1");
+exit(-4);
+}
 
 unsigned long int i=0;
 unsigned long int j=0;
 
+printf("\n A Columns:%lu A Rows:%lu",A->Columns,A->Rows);
+
 for(i=0;i<A->Rows;i+=1){
-Entries[i]=malloc(A->Rows*sizeof(long double));
+//Entries[i]=malloc(A->Rows*sizeof(long double));
+/*
+if(Entries[i]==NULL){
+printf("\n BAD ENTRIES TRANSPOSE 2");
+exit(-4);
+}
+*/
 for(j=0;j<A->Columns;j+=1){
+//Entries[j][i] = 0.0;
+
 Entries[j][i]=A->Entries[i][j];
+
 }
 }
 
@@ -894,6 +930,19 @@ C->Name = N;
 return C;
 }
 
+
+Matrix* NoBiasMR(Matrix*A){
+if(A==NULL){
+printf("\n No MAtrix to remove bias");
+exit(-2);
+}
+
+free(A->Entries[A->Rows-1]);
+A->Entries[A->Rows-1]=NULL;
+A->Rows-=1;
+
+return A;
+}
 //Return norm matrix, which are all from Matrix A...
 //Essentially it's a copyMatrix
 Matrix * NormalizeValuesMR(Matrix*A){
@@ -901,7 +950,20 @@ if(A==NULL){
 printf("\n No Matrix to Normalize values");
 exit(-2);
 }
-return CopyMatrixMR(A,"Normalized");
+//return CopyMatrixMR(A,"Normalized");
+size_t i=0;
+size_t j=0;
+
+Matrix* C = CreateMR(CreateE(A->Rows,1),A->Rows,1,"Sum of each row");
+long double sum = 0.0;
+for(i=0;i<A->Rows;i+=1){
+for(j=0;j<A->Columns;j+=1){
+sum+=A->Entries[i][j];
+}
+C->Entries[i][0] = sum;
+}
+
+return C;
 }
 
 ////Normalize Matrix given its normalize values
@@ -910,23 +972,65 @@ if(A==NULL||Norms==NULL){
 printf("\n Numm matrices for normalizeM");
 exit(-2);
 }
+if(A->Rows!=Norms->Rows){
+printf("\n NormalizeM Rows don't match!");
+exit(-2);
+}
 
-unsigned long int i=0;
-unsigned long int j=0;
+size_t i=0;
+size_t j=0;
 
+if(!Transposed){
 for(i=0;i<A->Rows;i+=1){
 for(j=0;j<A->Columns;j+=1){
-
-if(Transposed)
-A->Entries[i][j]/=Norms->Entries[j][i];
-else
-A->Entries[i][j]/=Norms->Entries[i][j];
-
+A->Entries[i][j]/=Norms->Entries[i][0];
+}
+}
+}
+else{
+for(i=0;i<A->Columns;i+=1){
+for(j=0;j<A->Rows;j+=1){
+A->Entries[j][i]/=Norms->Entries[i][0];
+}
 }
 }
 
 }
 //
+
+
+Matrix* AppendBiasM(Matrix*A){
+if(A==NULL){
+printf("\n Null Matrix Append");
+exit(-2);
+}
+/*
+A->Entries = realloc(A->Entries,(A->Rows+1)*sizeof(long double*));
+A->Rows+=1;
+A->Entries[A->Rows-1] = malloc((A->Columns)*sizeof(long double));
+*/
+
+long double ** Entries = CreateE(A->Rows+1,A->Columns);
+
+size_t i=0;
+size_t j=0;
+for(j=0;j<A->Rows;j+=1){
+for(i=0;i<A->Columns;i+=1){
+Entries[j][i] = A->Entries[j][i];
+}
+}
+
+for(i=0;i<A->Columns;i+=1){
+Entries[A->Rows][i]=1.0;
+}
+
+DeleteEntries(A->Entries,A->Rows);
+
+A->Entries=Entries;
+A->Rows+=1;
+
+return A;
+}
 
 ////Multiply Row by value
 void MultiplyRowM(Matrix* M,unsigned long int Row, long double Value){
@@ -1191,6 +1295,39 @@ unsigned long int j=0;
 
 }
 
+size_t GetRows(FILE* F,char Delim){
+
+long PrevPosition = ftell(F);
+
+char c;
+
+size_t R = 0;
+
+bool DelimFound=false;
+
+//Scan file until reach either delim before \n or reach \n
+while(fscanf(F,"%c",&c)!=EOF){
+
+if(c=='\n'){
+if(!DelimFound){
+R+=1;
+}
+else{
+DelimFound=false;
+}
+}
+else if(c==Delim){
+DelimFound=true;
+R+=1;
+}
+
+}
+
+fseek(F,PrevPosition,SEEK_SET);
+
+return R;
+}
+
 //Iterate until reach new line, this will be column
 //MUST DEFINE COLUMN AT THE FIRST ROW AT LEAST!!!!!!!!!!
 size_t GetColumns(FILE* F){
@@ -1430,17 +1567,28 @@ exit(-4);
 }
 
 size_t COLUMNS = GetColumns(F);
+size_t ROWS = GetRows(F,Delimiter);
 
 size_t Columns = 0;
+
 size_t Rows = 0;
 
 size_t Size = 1;
 //long double ** Entries = malloc(1*sizeof(long double *));
 //Entries[0] = malloc((COLUMNS)*sizeof(long double));
 
-Data** Entries = malloc(sizeof(Data*));
+//Data** Entries = malloc(sizeof(Data*));
 
-Entries[0]=malloc((COLUMNS)*sizeof(Data));
+if(ROWS<=0 || COLUMNS<=0){
+printf("\n No Rows or Columns");
+return NULL;
+}
+
+long double Entries[ROWS][COLUMNS];
+
+//Data*Entries=malloc(sizeof(Data));
+
+//Entries[0]=malloc((COLUMNS+1)*sizeof(Data));
 
 while(true){
 
@@ -1452,7 +1600,16 @@ if(R->First==1){
 
 if(R->Second!=-88888888){
 printf("\n RESULT FINAL:%Lf",R->Second);
-(Entries[Rows][Columns]).Entry=R->Second;
+
+//(Entries[Rows][Columns]).Entry=R->Second;
+
+
+
+//AddEntry(&Entries,R->Second);
+
+Entries[Rows][Columns] = R->Second;
+
+
 }
 
 }
@@ -1477,6 +1634,7 @@ if(Rows>=Size){
 
 Size+=1;
 
+/*
 Data** t =realloc(Entries,(Rows+1)*sizeof(Data*));
 if(t==NULL){
 printf("\n Error Reading more rows");
@@ -1490,9 +1648,19 @@ if(Entries[Rows]==NULL){
 printf("\n Error Reading more rows");
 exit(-2);
 }
+*/
 }
 //
-Entries[Rows][Columns].Entry = R->Second;
+
+//Entries[Rows][Columns].Entry = R->Second;
+
+
+
+//AddEntry(&Entries,R->Second);
+
+
+Entries[Rows][Columns] = R->Second;
+
 //
 Columns+=1;
 }
@@ -1503,6 +1671,7 @@ Columns+=1;
 Rows+=1;
 printf("\n SIZE:%lu  ROWS:%lu COLUMNS:%lu\n",Size,Rows,COLUMNS);
 if(COLUMNS==0){
+/*
 long long int t=0;
 while(t<Rows){
 free(Entries[t]);
@@ -1511,6 +1680,8 @@ t+=1;
 }
 free(Entries);
 Entries=NULL;
+*/
+//DeleteAllEntries(&Entries,Rows*COLUMNS);
 return NULL;
 }
 
@@ -1518,45 +1689,101 @@ return NULL;
 //
 //
 
-Matrix* M = malloc(sizeof(Matrix));
-if(M==NULL){
+MNew=NULL;
+
+printf("\n MADE IT 4");
+
+//PrintEntries(&Entries,Rows*COLUMNS);
+
+MNew = malloc(sizeof(Matrix));
+if(MNew==NULL){
 printf("\nFAILED TO Get New Matrix");
 exit(-1);
 }
 
-M->Rows = Rows;
-M->Columns=COLUMNS;
+MNew->Rows = Rows;
+MNew->Columns=COLUMNS;
 
-M->Entries=malloc(Rows*sizeof(long double*));
+MNew->Entries=CreateE(Rows,COLUMNS);
 
-if(M->Entries==NULL){
+if(MNew->Entries==NULL){
         printf("\n Not enough memory for matrix read");
         exit(-1);
 }
 
-long long int j=0;
-long long int k=0;
+printf("\n MADE IT 5");
+size_t j=0;
+size_t k=0;
+
+//Data** E1 = &Entries;
+//Data** E2 = NULL;
 
 for(j=0; j<Rows;j+=1){
-	M->Entries[j]=malloc((COLUMNS)*sizeof(long double));
-	if(M->Entries[j]==NULL){
+	/*
+	MNew->Entries[j]=malloc((COLUMNS)*sizeof(long double));
+	if(MNew->Entries[j]==NULL){
 	printf("\n Not enough memory for matrix read");
 	exit(-1);
-	}	
-        for(k=0; k<COLUMNS;k+=1){
-                        printf("%Lf ",Entries[j][k].Entry);
-                        M->Entries[j][k]=Entries[j][k].Entry;
 	}
-	free(Entries[j]);
+	*/	
+        /*
+	E2 = E1;	
+        if(E2==NULL)
+	break;
+	*/
+	for(k=0; k<COLUMNS;k+=1){
+                        //printf("%Lf ",Entries[j][k].Entry);
+                        MNew->Entries[j][k]=Entries[j][k];
+	
+	/*Data* E4 = ((*E2)->Next);
+	if(E4==NULL)
+	break;
+	E2 = &E4;
+	*/
+	}
+        
+        //if(Rows!=1 && COLUMNS!=1){
+
+	//E1 = E2;
+	/*	
+	printf("\n Freeing:%LF",Entries[j][0].Entry); 
+	if(Entries[j]!=NULL)
+        free(Entries[j]);
 	Entries[j]=NULL;                     
-                printf("\n");
+        */
+
+  	//}
+  	//
+  	/*
+	Data * E3 = ((*E1)->Next);
+ 	if(E3==NULL)
+	break;
+	E1 = &E3;
+      	*/
+       printf("\n");
 }
 
+/*
+if(Entries[0]!=NULL)
+free(Entries[0]);
+*/
+
+/*
+//if(Rows!=1)
+for(j=1;j<Rows;j+=1)
+//for(k=0;k<COLUMNS;k+=1)
+free(Entries[j]);
+*/
+
+//
+//DeleteAllEntries(&Entries,Rows*COLUMNS);
+
+/*
 if(Entries!=NULL){
 free(Entries);
 Entries=NULL;
 }
-
+*/
 //DeleteData(Data,Rows,COLUMNS);
 /*
 Matrix* M = malloc(sizeof(Matrix));
@@ -1566,7 +1793,7 @@ M->Columns=COLUMNS;
 //M->Entries = Entries;
 
 MFS1->F=F;
-MFS1->M=M;
+MFS1->M=MNew;
 
 return MFS1;
 }
@@ -1687,4 +1914,67 @@ Cat = Caty;
 return Cat;
 }
 */
+
+
+void AddEntry(Data** E,long double d){
+if((*E)==NULL){
+*E=malloc(sizeof(Data));
+(*E)->Entry = 0.0;
+(*E)->Next = NULL;
+return;
+}
+
+Data** E1 = E;
+while((*E1)->Next!=NULL){
+Data** E2 = &((*E1)->Next);
+E1=E2;
+}
+(*E1)->Next=malloc(sizeof(Data));
+//(*E1)->Next->Entry = 0.0;
+Data* E2 = (*E1)->Next;
+E2->Entry = d;
+E2->Next=NULL;
+}
+
+void DeleteAllEntries(Data** E,size_t Len){
+
+Data**E1 = E;
+
+size_t i=0;
+
+while(*E1!=NULL && i<Len){
+Data**E2 = &((*E1)->Next);
+
+if(*E1!=NULL)
+free(*E1);
+*E1=NULL;
+
+E1=E2;
+
+i+=1;
+}
+
+free(E);
+E=NULL;
+
+}
+
+void PrintEntries(Data**E,size_t Len){
+
+Data ** E2 = E;
+
+size_t i=0;
+
+while(E2!=NULL && i<Len){
+
+//if((*E2)->Entry!=NULL)
+printf("\n Data:%LG",(*E2)->Entry);
+
+Data*E3 = (*E2)->Next;
+E2=&E3;
+i+=1;
+}
+
+
+}
 

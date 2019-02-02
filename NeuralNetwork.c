@@ -39,10 +39,13 @@ NeuralNetwork** CreateNeuralNetwork(Layer* AllLayers);
 int FeedForward(NeuralNetwork** NN, Matrix* Input);
 
 //Assess the error and then propogate that error back
-int BackPropagate(NeuralNetwork** NN, Matrix*Error);
+int BackPropagate(NeuralNetwork** NN, Matrix*Error,bool Normalized);
 
 //Computer gradient descent given error type and error values
 int Gradient(NeuralNetwork**NN,long double lr);
+
+//add all gradients to weights
+int Learn(NeuralNetwork**NN);
 
 //Delete NN
 void DeleteNetwork(NeuralNetwork**N);
@@ -71,6 +74,11 @@ void ClearBuffer();
 //Points to a pointer to a neural network
 //NeuralNetwork**N;
 
+Layer** NewL;
+
+//Matrix* MNew=NULL;
+
+//MatrixFileStream*MFS = NULL;
 //ARGV[1] CAN BE ARGUMENT FOR FILE
 //ARGV[2] CAN BE ARGUMENT FOR DELIMITER
 int main(int argc, char**argv){
@@ -82,12 +90,12 @@ NeuralNetwork**N = NULL;
 //Use Existing Neural Network or Create one
 if(argc>3 && (argc>3? strlen(argv[0])!=0:false)){
 
-N = (ParseLayers(argv[1],argv[3][0]));
+N = (ParseLayers(argv[1],argv[argc-1][0]));
 
 }
 else{
 
-Delim = (argc>2? (strlen(argv[2])>0?argv[2][0]:'+'):'+');
+Delim = (argc>2? (strlen(argv[argc-1])>0?argv[argc-1][0]:'+'):'+');
 N = CreateNeuralNetwork(NULL);
 
 }
@@ -98,32 +106,48 @@ N = CreateNeuralNetwork(NULL);
 //Used to parse matrices from file
 MatrixFileStream* MFS;
 
+long double Lr = 0.0;
+
+char* TrainFile = NULL;
+
 //Check if created new matrix or used existing
 if(argc>3){
 //int idx2 = argc-2;
-/*
-if(argc!=4){
-printf("\n Delimiter UNDEFINED!");
-idx2 = argc-1;
+if(argc>4){
+if(sscanf(argv[argc-1],"%LF",&Lr)<0){
+printf("\n Bad Learning Rate Parsed");
+Lr = -1;
 }
-*/
+}
 //else{
 Delim = argv[argc-1][0];
 //}
-MFS = NewMatrixFileStream(argv[argc-2]);
+//MFS = NewMatrixFileStream(argv[2]);
+TrainFile = argv[2];
 }
 else{
 int idx = -1;
+
+if(argc>3){
+if(sscanf(argv[argc-2],"%LF",&Lr)<0){
+printf("\n Bad Learning Rate Parsed");
+Lr = -1;
+}
+}
+
 if(argc<3){
+
 if(argc<2){
 printf("\n Training Data UNDEFINED!\n");
 }
 printf("\n Delimiter UNDEFINED!\n");
 idx = 1;
+
 }
 else{
 idx = 1;
 Delim = argv[argc-1][0];
+//snprintf(argv[argc-2],strlen(argv[argc-2]),"%LF",Lr);
 }
 
 //printf("Enter training data file/folder:");
@@ -131,21 +155,42 @@ Delim = argv[argc-1][0];
 //scanf("%s",FI);
 
 if(idx!=-1)
-MFS = NewMatrixFileStream(argv[idx]);
+//MFS = NewMatrixFileStream(argv[1]);
+TrainFile=argv[1];
 }
 
 //Train neural network using Matrix File Stream
 
 int err = -1;
 
-long double lr;
+//long double lr;
 
-printf("\nEnter Learning Rate:");
+//printf("\nEnter Learning Rate:");
 
-scanf("%LF",&lr);
+//SaveNetwork(N,Delim);
 
+Lr = 0.01;
 
-if(lr>0){
+//scanf("%LF",&Lr);
+//scanf("%c");
+
+//long double correct = 0;
+
+int correct = 0;
+
+int test = 0;
+
+if(Lr>0){
+
+long long int iteration = 0;
+
+for(iteration=0;iteration<1;iteration+=1){
+
+correct = 0;
+
+test = 0;
+
+MFS = NewMatrixFileStream(TrainFile);
 
 while(ReadFile(MFS,Delim)!=NULL){
 
@@ -154,13 +199,32 @@ err = FeedForward(N,MFS->M);
 
 DeleteMatrixM(MFS->M);
 
-if(ReadFile(MFS,Delim)!=NULL){
+printf("\n\n\n MADE IT");
+MatrixFileStream* MFS2 = ReadFile(MFS,Delim);
+printf("\n\n\n MADE IT");
 
+if(MFS2!=NULL){
+
+if(MFS!=NULL){
 //Back Propagate error
+printf("\n Made 1");
+err = BackPropagate(N,CopyMatrixMR(MFS->M,"MNew Copy"),(*N)->Normalized==1);
+}
 
-err = BackPropagate(N,CopyMatrixMR(MFS->M,"Error Copied"));
+if(err==1){
+correct+=1;
+//break;
+}
 
-DeleteMatrixM(MFS->M);
+test+=1;
+
+if((double)correct / (double)(test+1)==1.0){
+break;
+}
+
+DeleteMatrixM(MFS2->M);
+
+//CloseMFS(MFS2);
 
 }
 
@@ -169,23 +233,30 @@ printf("\n Network BackPropogate couldn't read more info");
 break;
 }
 
+
 if(err!=1){
 
-Gradient(N,lr);
+Gradient(N,Lr);
+
+Learn(N);
 
 }
+
+}
+
+printf("\n Percent Correct: %f Amount Correct:%d",(double)correct/(double)(test+1),correct);
+
+CloseMFS(MFS);
+
+//DeleteMatrixM(MFS->M);
 
 }
 
 }
 else{
 printf("\n Learning rate must be greater than 0!");
+//CloseMFS(MFS);
 }
-
-
-
-
-
 
 SaveNetwork(N,Delim);
 
@@ -199,7 +270,7 @@ SaveNetwork(N,Delim);
 
 */
 
-CloseMFS(MFS);
+//CloseMFS(MFS);
 PrintNetwork(*N);
 DeleteNetwork(N);
 //
@@ -285,6 +356,8 @@ printf("\n Normalized? Enter >0 Yes <=0 No:");
 
 (*N)->Normalized = ParseInt()>0;
 
+Layer**H=NULL;
+
 for(i=0;i<Layers;i+=1){
 if(i==0){
 printf("\nEnter Input Layer Size:");
@@ -303,11 +376,14 @@ IN = CreateMR(CreateE(LayerSize,1),LayerSize,1,"Input");
 IN->Entries[LayerSize-1][0] = 1.0;
 
 Layer**IL = NULL;
-IL = NewLayer(NULL,IN,0,0);
+Layer*** IL2 = NULL;
+IL2 = NewLayer(NULL,IN,0,0);
+
+IL = *IL2;
 
 (*N)->Layers=IL;
 
-Prev=((*N)->Layers);
+Prev=(IL);
 
 //PrintLayers(N->Layers);
 
@@ -319,7 +395,7 @@ printf("\n Enter Hidden Layer Size:");
 else{
 printf("\nEnter Output Layer Size:");
 }
-LayerSize = ParseInt() + (i==Layers-1? 0:1);
+LayerSize = ParseInt() + (i==Layers-1? 0:2);
 if(LayerSize<1){
 printf("\n Invalid Layer Size");
 exit(-1);
@@ -343,10 +419,10 @@ int size = i==1?(numsize+8):(numsize+7);
 printf("\n SIZE:%d",size);
 
 Matrix* Weights = NULL;
-Weights = CreateMR(CreateE(Rows,Columns),Rows,Columns,"Weights");
+Weights = CreateMR(CreateE(i==Layers-1? Rows:Rows-1,Columns),i==Layers-1? Rows:Rows-1,Columns,"Weights");
 
 Matrix* GradientWeights = NULL;
-GradientWeights = CreateMR(CreateE(Rows,Columns),Rows,Columns,"GradientWeights");
+GradientWeights = CreateMR(CreateE(i==Layers-1? Rows:Rows-1,Columns),i==Layers-1? Rows:Rows-1,Columns,"GradientWeights");
 
 Matrix* Error = NULL;
 
@@ -360,9 +436,12 @@ Error = CreateMR(CreateE(Rows,(*Prev)->Activation->Columns),Rows,(*Prev)->Activa
 
 RandomizeM(Weights);
 
-Layer** H = NULL;
+//Layer** H = NULL;
+Layer*** H2 = NULL;
 
-H = NewLayer(Prev,Weights,1,Activation);
+H2 = NewLayer(Prev,Weights,1,Activation);
+
+H = *H2;
 
 (*H)->Activation = ActivationM;
 
@@ -371,6 +450,8 @@ H = NewLayer(Prev,Weights,1,Activation);
 (*H)->Error =Error;
 
 AddLayer(N,H);
+
+//free(H);
 
 //(*Prev)->Next = H;
 
@@ -403,6 +484,7 @@ L=L2;
 
 }
 
+PrintLayers(*((*N)->Layers));
 
 return N;
 }
@@ -439,9 +521,17 @@ Layer** L2=NULL;
 for(L = (*((*NN)->Layers))->Next; L!=NULL; L2=((*L)->Next),L=L2){
 
 if((*L)->Activation!=NULL)
+
 DeleteMatrixM((*L)->Activation);
 
-(*L)->Activation = MultiplyMR((*L)->Weights,(*(*L)->Prev)->Activation,"WXA");
+
+if((*L)->Next!=NULL)
+
+(*L)->Activation = AppendBiasM(MultiplyMR((*L)->Weights,(*(*L)->Prev)->Activation,"WXA"));
+
+else
+
+(*L)->Activation = (MultiplyMR((*L)->Weights,(*(*L)->Prev)->Activation,"WXA"));
 
 Activate(*L);
 
@@ -454,7 +544,7 @@ PrintLayers((*(*NN)->Layers));
 return 0;
 }
 
-int BackPropagate(NeuralNetwork** NN, Matrix*Error){
+int BackPropagate(NeuralNetwork** NN, Matrix*Error,bool Normalized){
 if(NN==NULL){
 printf("\n No NN to back propoget");
 exit(-2);
@@ -478,7 +568,7 @@ exit(-2);
 }
 
 size_t i=0;
-for(i=0;i<Error->Rows;i+=1){
+for(i=0;i<Error->Rows && i<(*L)->Activation->Rows;i+=1){
 printf("\n Entering expected output:%LF - %LF ==",Error->Entries[i][0],(*L)->Activation->Entries[i][0]);
 
 Error->Entries[i][0] = Error->Entries[i][0] - (*L)->Activation->Entries[i][0];
@@ -486,34 +576,80 @@ Error->Entries[i][0] = Error->Entries[i][0] - (*L)->Activation->Entries[i][0];
 printf("%LF\n",Error->Entries[i][0]);
 
 }
+
+printf("\n Made it 0");
+
 long double e = 0.000;
 
-for(i=0; i<Error->Rows;i+=1){
-e = Error->Entries[i][0] <0? Error->Entries[i][0]*-1:Error->Entries[i][0];
-if(!(e<0.0001)){
+for(i=0; i<Error->Rows && i<(*L)->Activation->Rows;i+=1){
+
+e = (Error->Entries[i][0] <0? Error->Entries[i][0]*-1:Error->Entries[i][0]);
+
+if(!(e<0.001)){
 printf("\n Still error for entry: %lu",i+1);
 NoError=false;
 }
+
 }
 
 if(NoError){
 printf("\n No error found");
+DeleteMatrixM(Error);
 return 1;
 }
+
+printf("\n Made it 0.5");
+
+DeleteMatrixM((*L)->Error);
 
 (*L)->Error = Error;
 Layer** L2 = NULL;
 
-for(L=L;(*(*L)->Prev)->Prev!=NULL;L2 = (*L)->Prev,L=L2){
+for(L=L;L!=NULL;L2 = (*L)->Prev,L=L2){
+if(L==NULL){
+break;
+}
+if((*L)->Prev==NULL){
+break;
+}
+if((*(*L)->Prev)->Prev==NULL){
+break;
+}
+Matrix*Normalized=NULL;
+
+if(Normalized){
+Normalized = NormalizeValuesMR((*L)->Weights); 
+//NormalizeM(WeightsTransposed,Normalized);
+}
 
 Matrix* WeightsTransposed = TransposeMR((*L)->Weights,"WT");
 
+if(Normalized){
+NormalizeM(WeightsTransposed,Normalized,true);
+DeleteMatrixM(Normalized);
+}
+
+printf("\n\n\n\n\n Made it 1");
 Matrix* WTXE = MultiplyMR(WeightsTransposed,(*L)->Activation,"WTXE");
+
+DeleteMatrixM(WeightsTransposed);
+
+/*
+DeleteMatrixM(
+(*(*L)->Prev)->Error); 
+*/
+
+DeleteMatrixM((*(*L)->Prev)->Error);
 
 (*(*L)->Prev)->Error = WTXE;
 
+printf("\n Made it 2");
+
 }
 
+PrintNetwork(*NN);
+
+printf("\n Made it 3");
 return 0;
 }
 
@@ -529,31 +665,73 @@ Layer** L2 = NULL;
 
 for(L = (*((*NN)->Layers))->Next;L!=NULL;L2=(*L)->Next,L=L2){
 
-Matrix* GradientWeight = NULL;
+Matrix* GradientWeights = NULL;
 Matrix* ActivationTranspose = NULL;
+ActivationTranspose = TransposeMR((*((*L)->Prev))->Activation,"Activation Transpose");
 
 switch((*L)->ActivationFunction){
 
 case 0:
     printf("\n Using no Derivative, Randomizing Weights");
-    ActivationTranspose = TransposeMR((*L)->Activation,"Activation Transpose");
-    
+        
     RandomizeM((*L)->Activation);
-
-    MultiplyAcrossM((*L)->Activation,(*L)->Error,"AXE"); 
-
-    //MultiplyAcrossV((*L)->Activation,Lr);
+    break;
 case 1:
     printf("\n Using Derivative of Sigmoid");
+    
+    DSigmoidM((*L)->Activation);   
+    break;
+case 2:
+    printf("\n Using Derivative of ReLu");
+    
+    DReluM((*L)->Activation);
+    break;
+case 3:
+    printf("\n Using Derivative of SoftMax");
 
+    DSoftMaxM((*L)->Activation);
+    break;
+default:
+    printf("\n Error! No Activation Function Specified!");
+    exit(-2);
 }
+    MultiplyAcrossV((*L)->Activation,Lr);
+    MultiplyAcrossM((*L)->Activation,(*L)->Error,"AXE");
 
+    if((*L)->Next!=NULL)
+    NoBiasMR((*L)->Activation);
+ 
+    DeleteMatrixM((*L)->GradientWeights);
 
+    (*L)->GradientWeights =  MultiplyMR(((*L)->Activation),ActivationTranspose,"(d/dA(A)*E*Lr)xA^T");
+
+    DeleteMatrixM(ActivationTranspose);
+
+    //(*L)->GradientWeights = GradientWeights;
 }
-
 
 
 return 0;
+}
+
+
+int Learn(NeuralNetwork**NN){
+if(NN==NULL){
+printf("\n No Neural Network to learn");
+exit(-2);
+}
+
+Layer** L = (*((*NN)->Layers))->Next;
+Layer**L2 = NULL;
+
+for(L = (*((*NN)->Layers))->Next;L!=NULL;L2=(*L)->Next,L=L2){
+
+AddM((*L)->Weights,(*L)->GradientWeights,1.0,"W + GW");
+
+}
+
+return 0;
+
 }
 
 void PrintNetwork(NeuralNetwork*N){
@@ -648,7 +826,11 @@ ReadFile(MFS,Delim);
 
 Matrix* C = MFS->M;
 
-Layer ** L = NewLayer(NULL,C,0,0);
+Layer***L4 = NULL;
+
+L4= NewLayer(NULL,C,0,0);
+
+Layer** L = *L4;
 
 AddLayer(NN,L);
 
@@ -709,7 +891,11 @@ Matrix* B=MFS->M;
 //L
 //Layer** L2 = NULL;
 
-L2 = NewLayer(Prev,B,1,atoi(str2));
+Layer***L3 = NULL;
+
+L3 = NewLayer(Prev,B,1,atoi(str2));
+
+L2=*L3;
 
 SetActivation(L2,B);
 
@@ -1177,3 +1363,66 @@ N2=NULL;
 
 
 }
+
+//Create a new valid layer for neural net
+Layer *** NewLayer(Layer** Prev,Matrix* M,int Type, int ActivationType){
+//
+NewL =malloc(sizeof(Layer*));
+
+if(NewL==NULL){
+printf("\n Failure mallocing for new  layer");
+exit(-2);
+}
+//
+NewL[0]=malloc(sizeof(Layer));
+if(NewL[0]==NULL){
+printf("\n Failure mallocing for new  layer");
+exit(-2);
+}
+//
+//
+if(M==NULL){
+printf("\n FAILURE GETTING MATRIX");
+exit(-3);
+}
+//
+if(NewL==NULL){
+printf("\n FAILURE Error creating new layer!");
+exit(-4);
+}
+//
+
+switch(Type){
+case 0:
+        (NewL[0])->Activation = M;
+        (NewL[0])->Type='I';
+        break;
+case 1:
+        (NewL[0])->Weights=M;
+        (NewL[0])->Type = 'H';
+        break;
+case 2:
+        (NewL[0])->Activation=M;
+        (NewL[0])->Type = 'O';
+        break;
+default:
+        printf("\n Error! Invalid Entries for New Layer!");
+        exit(-3);
+}
+
+if(ActivationType>3 || ActivationType<0){
+printf("\nNo Activation Function Specified");
+exit(-3);
+}
+
+(*NewL)->ActivationFunction=ActivationType;
+
+//Previous layer created
+(*NewL)->Prev = Prev;
+//
+////Brand ney layer
+(*NewL)->Next = NULL;
+//
+return &NewL;
+}
+//

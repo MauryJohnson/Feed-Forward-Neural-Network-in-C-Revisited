@@ -32,7 +32,7 @@ struct Layer_** Prev;
 //Create New Layer.. IMPORTENT TO KEEP TRACK OF NEXT AND PREV, SET PREV by passing
 //Parameter Layer Prev
 //Set Next by setting next to Result of NewLaye
-Layer **NewLayer(Layer** Prev,Matrix* M,int Type, int ActivationType);
+Layer *** NewLayer(Layer** Prev,Matrix* M,int Type, int ActivationType);
 
 //Add new layer
 //void AddLayer(Layer*Layers,Layer*NewL);
@@ -157,11 +157,22 @@ L2=NewL;
 }
 */
 
+/*
 //Create a new valid layer for neural net
 Layer ** NewLayer(Layer** Prev,Matrix* M,int Type, int ActivationType){
 
 Layer** L =malloc(sizeof(Layer*));
+if(L==NULL){
+printf("\n Failure mallocing for new  layer");
+exit(-2);
+}
+
 L[0]=malloc(sizeof(Layer));
+if(L[0]==NULL){
+printf("\n Failure mallocing for new  layer");
+exit(-2);
+}
+
 
 if(M==NULL){
 printf("\n FAILURE GETTING MATRIX");
@@ -206,6 +217,7 @@ exit(-3);
 
 return L;
 }
+*/
 
 //Delete ALL Layers... Start By Deleting ALL Prev and Next Layers along with their
 //Matrices
@@ -406,6 +418,8 @@ return L->Error;
  */
 void Activate(Layer*L){
 switch(L->ActivationFunction){
+case 0:
+ 	break;
 case 1:
 	SigmoidM(L->Activation);
 	break;
