@@ -184,7 +184,11 @@ if(Lr>0){
 
 long long int iteration = 0;
 
-for(iteration=0;iteration<1;iteration+=1){
+bool AllCorrect = false;
+
+for(iteration=0;iteration<100;iteration+=1){
+
+AllCorrect=true;
 
 correct = 0;
 
@@ -196,6 +200,8 @@ while(ReadFile(MFS,Delim)!=NULL){
 
 //Feed
 err = FeedForward(N,MFS->M);
+
+//exit(-1);
 
 DeleteMatrixM(MFS->M);
 
@@ -218,8 +224,12 @@ correct+=1;
 
 test+=1;
 
-if((double)correct / (double)(test+1)==1.0){
-break;
+
+if((double)correct / (double)(test)==1.0){
+//AllCorrect = true;
+}
+else{
+AllCorrect=false;
 }
 
 DeleteMatrixM(MFS2->M);
@@ -244,9 +254,13 @@ Learn(N);
 
 }
 
-printf("\n Percent Correct: %f Amount Correct:%d",(double)correct/(double)(test+1),correct);
+printf("\n Percent Correct: %f Amount Correct:%d",(double)correct/(double)(test),correct);
 
 CloseMFS(MFS);
+
+if(AllCorrect){
+break;
+}
 
 //DeleteMatrixM(MFS->M);
 
@@ -261,8 +275,6 @@ printf("\n Learning rate must be greater than 0!");
 SaveNetwork(N,Delim);
 
 /*
-
-
 
 
 
@@ -503,7 +515,7 @@ exit(-2);
 }
 
 if(Input->Rows!=(*((*NN)->Layers))->Activation->Rows-1){
-printf("\n Input rows:%lu does not match activation rows:%lu",Input->Rows,(*((*NN)->Layers))->Activation->Rows-1);
+printf("\n Input rows:%lu does not match activation rows:%lu",Input->Rows,(*((*NN)->Layers))->Activation->Rows);
 exit(-2);
 }
 
